@@ -1,7 +1,6 @@
-from typing import Callable
+from typing import Callable, Any
 
 from langchain_openai import ChatOpenAI
-from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph_react_agent_base import TOOLS
 from openai import OpenAI
@@ -26,7 +25,7 @@ def get_graph_closure(client: OpenAI, model_id: str, base_url: str = None) -> Ca
     # Define system prompt
     default_system_prompt = "You are a helpful AI assistant, please respond to the user's query to the best of your ability!"
 
-    def get_graph(system_prompt=default_system_prompt) -> CompiledGraph:
+    def get_graph(system_prompt=default_system_prompt) -> Any:
         """Get compiled graph with overwritten system prompt, if provided"""
         
         # Create instance of compiled graph
