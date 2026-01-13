@@ -1,18 +1,27 @@
 from typing import Callable
 
-from ibm_watsonx_ai import APIClient
-from langchain_ibm import ChatWatsonx
+from langchain_openai import ChatOpenAI
 from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import create_react_agent
-
 from langgraph_react_agent_base import TOOLS
+from openai import OpenAI
 
 
-def get_graph_closure(client: APIClient, model_id: str) -> Callable:
+def get_graph_closure(client: OpenAI, model_id: str, base_url: str = None) -> Callable:
     """Graph generator closure."""
 
-    # Initialise ChatWatsonx
-    chat = ChatWatsonx(model_id=model_id, watsonx_client=client, params={"temperature": 0.01})
+    # Initialise ChatOpenAI with OpenAI-compatible API (RHOAI/LlamaStack)
+    # Extract API key and base URL from OpenAI client or use provided values
+
+    # api_key = getattr(client, 'api_key', None) or "not-needed"
+    api_base = base_url or getattr(client, 'base_url', None)
+    
+    chat = ChatOpenAI(
+        model=model_id,
+        temperature=0.01,
+        # api_key=api_key, #not needed for local implementation
+        base_url=api_base,
+    )
 
     # Define system prompt
     default_system_prompt = "You are a helpful AI assistant, please respond to the user's query to the best of your ability!"

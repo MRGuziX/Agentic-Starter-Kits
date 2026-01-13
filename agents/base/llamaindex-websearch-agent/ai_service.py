@@ -4,8 +4,11 @@ def deployable_ai_service(context, url=None, model_id=None):
     import threading
     import json
     import urllib
+    import os
     from typing import Generator, AsyncGenerator
-    from ibm_watsonx_ai import APIClient, Credentials
+    from pathlib import Path
+    from dotenv import load_dotenv
+    from openai import OpenAI
     from llama_index.core.base.llms.types import ChatMessage
     from llama_index_workflow_agent_base.agent import get_workflow_closure
     from llama_index_workflow_agent_base.workflow import (
@@ -29,9 +32,30 @@ def deployable_ai_service(context, url=None, model_id=None):
         target=start_loop, args=(persistent_loop,), daemon=True
     ).start()  # We run a persistent loop in a separate daemon thread
 
-    hostname = urllib.parse.urlparse(url).hostname or ""
-    is_cloud_url = hostname.lower().endswith("cloud.ibm.com")
-    instance_id = None if is_cloud_url else "openshift"
+    # Load environment variables from .env file if it exists
+    dotenv_path = Path.cwd() / ".env"
+    if dotenv_path.is_file():
+        load_dotenv(dotenv_path=dotenv_path, override=True)
+
+    # Get API key from environment variable, fallback to context or default
+    api_key = os.getenv("API_KEY", "").strip()
+    if not api_key:
+        api_key = context.generate_token() if hasattr(context, 'generate_token') else "not-needed"
+    
+    # Get base URL from environment variable, fallback to url parameter or context
+    base_url = os.getenv("BASE_URL", "").strip()
+    if not base_url:
+        base_url = url
+    if not base_url and hasattr(context, 'get_base_url'):
+        base_url = context.get_base_url()
+    
+    # Default to OpenAI API if no base_url is set
+    if not base_url:
+        base_url = "https://api.openai.com/v1"
+    
+    # Ensure base_url ends with /v1 for OpenAI compatibility
+    if not base_url.endswith('/v1'):
+        base_url = base_url.rstrip('/') + '/v1'
 
     def get_formatted_message(resp: ChatMessage) -> dict | None:
         role = resp.role
@@ -190,15 +214,11 @@ def deployable_ai_service(context, url=None, model_id=None):
         }
         Please note that the `system message` MUST be placed first in the list of messages!
         """
-        client = APIClient(
-            credentials=Credentials(
-                url=url,
-                token=context.get_token(),
-                instance_id=instance_id,
-            ),
-            space_id=context.get_space_id(),
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url,
         )
-        workflow = get_workflow_closure(client, model_id)
+        workflow = get_workflow_closure(client, model_id, base_url=base_url)
 
         payload = context.get_json()
         messages = payload.get("messages", [])
@@ -233,15 +253,11 @@ def deployable_ai_service(context, url=None, model_id=None):
         }
         Please note that the `system message` MUST be placed first in the list of messages!
         """
-        client = APIClient(
-            credentials=Credentials(
-                url=url,
-                token=context.get_token(),
-                instance_id=instance_id,
-            ),
-            space_id=context.get_space_id(),
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url,
         )
-        workflow = get_workflow_closure(client, model_id)
+        workflow = get_workflow_closure(client, model_id, base_url=base_url)
 
         payload = context.get_json()
         headers = context.get_headers()

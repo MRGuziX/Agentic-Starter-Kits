@@ -1,17 +1,25 @@
 from typing import Callable
 
-from ibm_watsonx_ai import APIClient
-from llama_index.llms.ibm import WatsonxLLM
+from openai import OpenAI
+from llama_index.llms.openai import OpenAI as LlamaIndexOpenAI
 
 from llama_index_workflow_agent_base import TOOLS
 from llama_index_workflow_agent_base.workflow import FunctionCallingAgent
 
 
-def get_workflow_closure(client: APIClient, model_id: str) -> Callable:
+def get_workflow_closure(client: OpenAI, model_id: str, base_url: str = None) -> Callable:
     """Workflow generator closure."""
 
-    # Initialise WatsonxLLM
-    chat = WatsonxLLM(model_id=model_id, api_client=client)
+    # Initialise OpenAI-compatible LLM for RHOAI/LlamaStack
+    # Extract API key and base URL from OpenAI client or use provided values
+    api_key = getattr(client, 'api_key', None) or "not-needed"
+    api_base = base_url or getattr(client, 'base_url', None)
+    
+    chat = LlamaIndexOpenAI(
+        model=model_id,
+        api_key=api_key,
+        api_base=api_base,
+    )
 
     # Define system prompt
     default_system_prompt = "You are a helpful AI assistant, please respond to the user's query to the best of your ability!"

@@ -1,9 +1,8 @@
+from ai_service import deployable_ai_service
+from examples.interactive_chat import InteractiveChat
 from ibm_watsonx_ai import APIClient, Credentials
 from ibm_watsonx_ai.deployments import RuntimeContext
-
-from ai_service import deployable_ai_service
 from utils import load_config
-from examples._interactive_chat import InteractiveChat
 
 stream = True
 config = load_config()

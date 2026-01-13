@@ -1,9 +1,8 @@
 def deployable_ai_service(context, url=None, model_id=None):
-    import urllib
     from typing import Generator
 
     from langgraph_react_agent_base.agent import get_graph_closure
-    from ibm_watsonx_ai import APIClient, Credentials
+    from openai import OpenAI
     from langchain_core.messages import (
         BaseMessage,
         HumanMessage,
@@ -11,20 +10,27 @@ def deployable_ai_service(context, url=None, model_id=None):
         SystemMessage,
     )
 
-    hostname = urllib.parse.urlparse(url).hostname or ""
-    is_cloud_url = hostname.lower().endswith("cloud.ibm.com")
-    instance_id = None if is_cloud_url else "openshift"
+    # Use OpenAI client to connect to RHOAI/LlamaStack (OpenAI-compatible endpoint)
+    # url should point to the LlamaStack server endpoint
+    # For RHOAI/LlamaStack, we typically don't need authentication, but if needed, 
+    # it can be passed via api_key parameter
+    api_key = context.generate_token() if hasattr(context, 'generate_token') else "not-needed"
+    
+    # Construct base URL - if url is provided, use it; otherwise construct from context
+    base_url = url
+    if not base_url and hasattr(context, 'get_base_url'):
+        base_url = context.get_base_url()
+    
+    # Ensure base_url ends with /v1 for OpenAI compatibility
+    if base_url and not base_url.endswith('/v1'):
+        base_url = base_url.rstrip('/') + '/v1'
 
-    client = APIClient(
-        credentials=Credentials(
-            url=url,
-            token=context.generate_token(),
-            instance_id=instance_id,
-        ),
-        space_id=context.get_space_id(),
+    client = OpenAI(
+        api_key=api_key,
+        base_url=base_url,
     )
 
-    graph = get_graph_closure(client, model_id)
+    graph = get_graph_closure(client, model_id, base_url=base_url)
 
     def get_formatted_message(
         resp: BaseMessage, is_assistant: bool = False
@@ -119,7 +125,8 @@ def deployable_ai_service(context, url=None, model_id=None):
         Please note that the `system message` MUST be placed first in the list of messages!
         """
 
-        client.set_token(context.get_token())
+        # OpenAI client doesn't need token refresh like watsonx
+        # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])
         messages = [convert_dict_to_message(_dict) for _dict in raw_messages]
@@ -173,7 +180,8 @@ def deployable_ai_service(context, url=None, model_id=None):
         headers = context.get_headers()
         is_assistant = headers.get("X-Ai-Interface") == "assistant"
 
-        client.set_token(context.get_token())
+        # OpenAI client doesn't need token refresh like watsonx
+        # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])
         messages = [convert_dict_to_message(_dict) for _dict in raw_messages]

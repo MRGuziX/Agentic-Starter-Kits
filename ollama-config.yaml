@@ -1,0 +1,21 @@
+version: '1'
+image_name: ollama
+apis:
+- inference
+- safety
+providers:
+  inference:
+  - provider_id: ollama
+    provider_type: remote::ollama
+    config:
+      url: http://localhost:11434
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config: {}
+metadata:
+  tags: []
+models:
+- metadata: {}
+  model_id: llama3.2:3b
+  provider_id: ollama
