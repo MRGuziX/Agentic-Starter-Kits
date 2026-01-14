@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
 # Add parent directory to path to allow imports
 parent_dir = Path(__file__).parent.parent
@@ -44,10 +45,21 @@ if base_url and not base_url.endswith('/v1'):
 stream = True
 context = SimpleContext()
 ai_service_resp_func = deployable_ai_service(
-    context=context, 
+    context=context,
     url=base_url if base_url else None,
     model_id=model_id
 )[stream]
+
+# chat = ChatOpenAI(
+#         model=model_id,
+#         temperature=0.01,
+#         # api_key=api_key, #not needed for local implementation
+#         base_url=base_url,
+#     )
+#
+# context = RuntimeContext(api_client=client)
+# ai_service_resp_func = deployable_ai_service(context=context, **online_parameters)[stream]
+
 
 def ai_service_invoke(payload):
     context.request_payload_json = payload

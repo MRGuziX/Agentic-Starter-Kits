@@ -6,11 +6,11 @@ from typing import Callable
 
 class InteractiveChat:
     def __init__(
-        self,
-        ai_service_invoke: Callable,
-        questions: tuple[str] = None,
-        stream: bool = False,
-        verbose: bool = True,
+            self,
+            ai_service_invoke: Callable,
+            questions: tuple[str] = None,
+            stream: bool = False,
+            verbose: bool = True,
     ) -> None:
         self.ai_service_invoke = ai_service_invoke
         self._ordered_list = lambda seq_: "\n".join(
@@ -56,9 +56,9 @@ class InteractiveChat:
                 header = f" {delta['role'].capitalize()} Message ".center(80, "=")
                 print("\n", header)
                 self._delta_start = (
-                    True
-                    and (choice.get("finish_reason") is None)
-                    and delta["role"] != "tool"
+                        True
+                        and (choice.get("finish_reason") is None)
+                        and delta["role"] != "tool"
                 )
             print(delta.get("content") or delta.get("tool_calls"), flush=True, end="")
         else:
