@@ -281,9 +281,9 @@ def deployable_ai_service(context, url=None, model_id=None):
             api_key=api_key,
             base_url=base_url,
             model=model,
-            is_chat_model = True,
-            is_function_calling_model = True,
-            context_window = 128000
+            is_chat_model=True,
+            is_function_calling_model=True,
+            context_window=128000
         )
         workflow = get_workflow_closure(client, model, base_url=base_url)
 
@@ -315,11 +315,13 @@ def deployable_ai_service(context, url=None, model_id=None):
                             ]
                         }
                     elif isinstance(ev, StopEvent):
-                        finish_reason = (
-                            ev.result["response"]
-                            .raw.get("choices")[0]
-                            .get("finish_reason")
-                        )
+                        # Access finish_reason from ChatCompletion object (not dict)
+                        # .raw is a ChatCompletion Pydantic model, so use attribute access
+                        try:
+                            finish_reason = ev.result["response"].raw.choices[0].finish_reason
+                        except (AttributeError, IndexError, KeyError):
+                            # Fallback if structure is different
+                            finish_reason = None
                         yield {
                             "choices": [
                                 {
