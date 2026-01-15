@@ -36,13 +36,13 @@ def create_config(template_file: str, target_file: str):
         raise KeyError(f"Configuration section {deployment_section_name} not found in {target_file}")
 
     # Fill in config values from environment variables
-    config[deployment_section_name]["watsonx_apikey"] = os.getenv("WATSONX_API_KEY", "")
-    config[deployment_section_name]["watsonx_url"] = os.getenv("WATSONX_URL", "")
-    config[deployment_section_name]["space_id"] = os.getenv("WATSONX_SPACE_ID", "")
+    config[deployment_section_name]["apikey"] = os.getenv("API_KEY", "")
+    config[deployment_section_name]["url"] = os.getenv("BASE_URL", "")
+    config[deployment_section_name]["space_id"] = os.getenv("SPACE_ID", "")
     config[deployment_section_name]["deployment_id"] = os.getenv("DEPLOYMENT_ID", "")
 
     # Map the same url for online parameters
-    config[deployment_section_name]["online"]["parameters"]["url"] = config[deployment_section_name]["watsonx_url"]
+    config[deployment_section_name]["online"]["parameters"]["url"] = config[deployment_section_name]["url"]
 
     # Temporarily set 'overwrite' flag to True in 'software_specification'
     config[deployment_section_name]["software_specification"]["overwrite"] = True

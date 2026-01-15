@@ -16,7 +16,7 @@ function InitialMessage({ onQuestion }) {
   const deployment = useContext(DeploymentContext);
 
   const promptButtons = deployment?.sample_questions || [];
-  const initialGreeting = `Welcome to ${deployment?.name || "watsonx Agent"}`; // TODO translate
+  const initialGreeting = `Welcome to ${deployment?.name || "AutoX Agent"}`; // TODO translate
   const beforeStart = deployment?.description || DEFAULT_DESCRIPTION;
   const imageUrl = `/${deployment?.placeholder_image}`;
   const initialImageUrl = deployment?.placeholder_image ? imageUrl : null;

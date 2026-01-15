@@ -23,8 +23,8 @@ watsonx-ai app new
 3. **Configure** the app
 
 Go to the [Developer Access](https://dataplatform.cloud.ibm.com/developer-access) to find your environment variables also retrieve deployment url/deployment_id for deployed template from the link provided afer deployment.
-Note that the value of the **WATSONX_BASE_DEPLOYMENT_URL** needs to end with the deployment guid as we will be
-crafting multiple URLs based on that base. Example of **WATSONX_BASE_DEPLOYMENT_URL**:
+Note that the value of the **BASE_DEPLOYMENT_URL** needs to end with the deployment guid as we will be
+crafting multiple URLs based on that base. Example of **BASE_DEPLOYMENT_URL**:
 `https://us-south.ml.cloud.ibm.com/ml/v4/deployments/{deployment_id}`
 
 ```bash

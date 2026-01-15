@@ -162,7 +162,7 @@ if __name__ == "__main__":
     # Init ibm_watsonx_ai.APIClient
     api_client = ibm_watsonx_ai.APIClient(
         credentials=ibm_watsonx_ai.Credentials(
-            url=config["watsonx_url"], api_key=config["watsonx_apikey"]
+            url=config["url"], api_key=config["apikey"]
         ),
         space_id=config["space_id"],
     )

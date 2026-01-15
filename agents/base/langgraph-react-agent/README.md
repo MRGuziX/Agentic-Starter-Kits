@@ -252,7 +252,7 @@ You can also run the graphical application locally using the deployed model. All
 2. **Configure the app**:
 
    All required variables are defined in the `.env` file.
-   Here is an example of how to create the **WATSONX_BASE_DEPLOYMENT_URL**:
+   Here is an example of how to create the **BASE_DEPLOYMENT_URL**:
    `https://{REGION}.ml.cloud.ibm.com/ml/v4/deployments/{deployment_id}`
 
 

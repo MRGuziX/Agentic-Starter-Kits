@@ -1,17 +1,33 @@
 from typing import Callable
 
-from ibm_watsonx_ai import APIClient
-from llama_index.llms.ibm import WatsonxLLM
-
+from llama_index.llms.openai_like import OpenAILike
 from llama_index_workflow_agent_base import TOOLS
 from llama_index_workflow_agent_base.workflow import FunctionCallingAgent
+from openai import OpenAI
 
 
-def get_workflow_closure(client: APIClient, model_id: str) -> Callable:
+def get_workflow_closure(client: OpenAI, model_id: str, base_url: str = None) -> Callable:
     """Workflow generator closure."""
 
-    # Initialise WatsonxLLM
-    chat = WatsonxLLM(model_id=model_id, api_client=client)
+    # Initialise OpenAI-compatible LLM for RHOAI/LlamaStack
+    # Extract API key and base URL from OpenAI client or use provided values
+    api_key = getattr(client, 'api_key', None) or "not-needed"
+    api_base = base_url or getattr(client, 'base_url', None)
+    
+    # For local/custom models, provide context_window to bypass model name validation
+    # Default to 4096 for most local models, but can be overridden if needed
+    context_window = 4096  # Common context window for local models
+    
+    # OpenAILike must have is_chat_model=True to use chat completions endpoint (required for tools)
+    # Without this, it falls back to completions endpoint which doesn't support tools parameter
+    chat = OpenAILike(
+        model=model_id,
+        api_key=api_key,
+        api_base=api_base,
+        context_window=context_window,  # Bypass model name validation for custom models
+        is_chat_model=True,  # CRITICAL: Use chat completions endpoint instead of completions
+        is_function_calling_model=True,  # Enable function calling/tools support
+    )
 
     # Define system prompt
     default_system_prompt = "You are a helpful AI assistant, please respond to the user's query to the best of your ability!"

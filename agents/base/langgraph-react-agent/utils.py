@@ -30,14 +30,14 @@ def load_config(section: str | None = None) -> dict:
     config = tomllib.loads((Path(__file__).parent / "config.toml").read_text())
     if dotenv_exists:
         dotenv_data = {
-            "watsonx_apikey": get_from_env("WATSONX_APIKEY"),
-            "watsonx_url": get_from_env("WATSONX_URL"),
-            "watsonx_token": get_from_env("WATSONX_TOKEN"),
-            "space_id": get_from_env("WATSONX_SPACE_ID"),
-            "deployment_id": get_from_env("WATSONX_DEPLOYMENT_ID"),
-            "watsonx_password": get_from_env("WATSONX_PASSWORD"),
-            "watsonx_username": get_from_env("WATSONX_USERNAME"),
-            "watsonx_instance_id": get_from_env("WATSONX_INSTANCE_ID"),
+            "apikey": get_from_env("API_KEY"),
+            "url": get_from_env("BASE_URL"),
+            "token": get_from_env("API_TOKEN"),
+            "space_id": get_from_env("SPACE_ID"),
+            "deployment_id": get_from_env("DEPLOYMENT_ID"),
+            "password": get_from_env("PASSWORD"),
+            "username": get_from_env("USERNAME"),
+            "instance_id": get_from_env("INSTANCE_ID"),
         }
         config["deployment"].update(dotenv_data)
     if section is not None:

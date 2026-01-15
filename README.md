@@ -1,6 +1,6 @@
-# watsonx Developer Hub
+# RHOAI - Agentic Starter Kits - ASK
 
-Examples and guides for building and deploying Gen AI applications using the watsonx APIs.
+Examples and guides for building and deploying Gen AI applications using the RHOAI solutions via OpanAI APIs.
 
 - [Agents](/agents/README.md)
 - [Apps](/apps/README.md)
