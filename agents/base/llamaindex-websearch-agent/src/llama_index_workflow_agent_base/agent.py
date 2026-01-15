@@ -18,11 +18,15 @@ def get_workflow_closure(client: OpenAI, model_id: str, base_url: str = None) ->
     # Default to 4096 for most local models, but can be overridden if needed
     context_window = 4096  # Common context window for local models
     
+    # OpenAILike must have is_chat_model=True to use chat completions endpoint (required for tools)
+    # Without this, it falls back to completions endpoint which doesn't support tools parameter
     chat = OpenAILike(
         model=model_id,
         api_key=api_key,
         api_base=api_base,
         context_window=context_window,  # Bypass model name validation for custom models
+        is_chat_model=True,  # CRITICAL: Use chat completions endpoint instead of completions
+        is_function_calling_model=True,  # Enable function calling/tools support
     )
 
     # Define system prompt
