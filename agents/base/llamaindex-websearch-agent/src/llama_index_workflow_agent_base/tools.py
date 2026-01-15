@@ -8,4 +8,4 @@ def dummy_web_search(input_data: str) -> list[str]:
     Returns:
         Dummy list of web search results.
     """
-    return ["IBM watsonx.ai"]
+    return ["RHOAI AutoX"]

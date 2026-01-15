@@ -1,8 +1,8 @@
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 # Add parent directory to path to allow imports
 parent_dir = Path(__file__).parent.parent
@@ -18,12 +18,13 @@ from _interactive_chat import InteractiveChat
 
 class SimpleContext:
     """Simple context object for local execution"""
+
     def __init__(self, payload=None):
         self.request_payload_json = payload or {}
-    
+
     def get_json(self):
         return self.request_payload_json
-    
+
     def get_headers(self):
         return {}
 
@@ -50,20 +51,11 @@ ai_service_resp_func = deployable_ai_service(
     model_id=model_id
 )[stream]
 
-# chat = ChatOpenAI(
-#         model=model_id,
-#         temperature=0.01,
-#         # api_key=api_key, #not needed for local implementation
-#         base_url=base_url,
-#     )
-#
-# context = RuntimeContext(api_client=client)
-# ai_service_resp_func = deployable_ai_service(context=context, **online_parameters)[stream]
-
 
 def ai_service_invoke(payload):
     context.request_payload_json = payload
     return ai_service_resp_func(context)
+
 
 chat = InteractiveChat(ai_service_invoke, stream=stream)
 chat.run()

@@ -125,7 +125,7 @@ def deployable_ai_service(context, url=None, model_id=None):
         Please note that the `system message` MUST be placed first in the list of messages!
         """
 
-        # OpenAI client doesn't need token refresh like watsonx
+        # OpenAI client doesn't need token refresh like AutoX
         # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])
@@ -180,7 +180,7 @@ def deployable_ai_service(context, url=None, model_id=None):
         headers = context.get_headers()
         is_assistant = headers.get("X-Ai-Interface") == "assistant"
 
-        # OpenAI client doesn't need token refresh like watsonx
+        # OpenAI client doesn't need token refresh like AutoX
         # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])

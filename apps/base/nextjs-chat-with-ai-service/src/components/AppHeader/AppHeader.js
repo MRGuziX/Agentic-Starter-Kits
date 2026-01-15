@@ -24,7 +24,7 @@ const AppHeader = () => {
             onClick={onClickSideNavExpand}
             isActive={isSideNavExpanded}
           />
-          <HeaderName href="/" prefix="IBM">
+          <HeaderName href="/" prefix="RHOAI">
             {brandName}
           </HeaderName>
           <HeaderGlobalBar className="app-header__navbar">

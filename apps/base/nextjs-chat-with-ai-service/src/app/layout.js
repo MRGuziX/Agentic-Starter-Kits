@@ -5,7 +5,7 @@ import "./globals.scss";
 
 export const metadata = {
   title: "AI Service app",
-  description: "IBM watsonx.ai app with Next.js 15",
+  description: "RHOAI AutoX app with Next.js 15",
 };
 
 async function getTheme() {

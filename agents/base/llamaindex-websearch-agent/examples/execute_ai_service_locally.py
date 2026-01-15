@@ -1,24 +1,30 @@
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add parent directory to path to allow imports
 parent_dir = Path(__file__).parent.parent
+examples_dir = Path(__file__).parent
+src_dir = parent_dir / "src"
 sys.path.insert(0, str(parent_dir))
+sys.path.insert(0, str(examples_dir))
+sys.path.insert(0, str(src_dir))
 
 from ai_service import deployable_ai_service
-from examples._interactive_chat import InteractiveChat
+from _interactive_chat import InteractiveChat
 
 
 class SimpleContext:
     """Simple context object for local execution"""
+
     def __init__(self, payload=None):
         self.request_payload_json = payload or {}
-    
+
     def get_json(self):
         return self.request_payload_json
-    
+
     def get_headers(self):
         return {}
 
@@ -40,14 +46,16 @@ if base_url and not base_url.endswith('/v1'):
 stream = True
 context = SimpleContext()
 ai_service_resp_func = deployable_ai_service(
-    context=context, 
+    context=context,
     url=base_url if base_url else None,
     model_id=model_id
 )[stream]
 
+
 def ai_service_invoke(payload):
     context.request_payload_json = payload
     return ai_service_resp_func(context)
+
 
 chat = InteractiveChat(ai_service_invoke, stream=stream)
 chat.run()

@@ -17,7 +17,7 @@ dep_config = config["deployment"]
 online_parameters = dep_config["online"]["parameters"]
 
 client = ibm_watsonx_ai.APIClient(
-    credentials=ibm_watsonx_ai.Credentials(url=dep_config["watsonx_url"], api_key=dep_config["watsonx_apikey"]),
+        credentials=ibm_watsonx_ai.Credentials(url=dep_config["url"], api_key=dep_config["apikey"]),
     space_id=dep_config["space_id"])
 
 root_dir = Path(__file__).parents[1]

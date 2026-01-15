@@ -25,7 +25,7 @@ async function _getDeployment() {
   if (!response.ok) {
     const { error } = await response.json();
     console.error(`Error while fetching deployment: ${error}`);
-    return { name: "watsonx AI Service" };
+    return { name: "AutoX AI Service" };
   }
   return await response.json();
 }
