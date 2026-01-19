@@ -2,7 +2,7 @@ from typing import Callable, Any
 
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
-from langgraph_react_agent_base import TOOLS
+from agents.base.langgraph_react_agent.src.langgraph_react_agent_base import TOOLS
 from openai import OpenAI
 
 from apps.utils import get_env_var
@@ -17,11 +17,17 @@ def get_graph_closure(
 
     api_key = get_env_var("API_KEY")
     if not api_key:
-        api_key = getattr(client, 'api_key', None) or "not-needed"
+        raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
 
-    base_url = get_env_var("BASE_URL")
     if not base_url:
-        base_url = base_url or getattr(client, 'base_url', None)
+        base_url = get_env_var("BASE_URL")
+        if not base_url:
+            raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
+
+    if not model_id:
+        model_id = get_env_var("MODEL_ID")
+        if not model_id:
+            raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
     default_system_prompt = "You are a helpful AI assistant, please respond to the user's query to the best of your ability!"
 
