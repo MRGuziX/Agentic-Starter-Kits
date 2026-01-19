@@ -1,24 +1,23 @@
-# A LlamaIndex Workflow LLM app template with function calling capabilities 🚀
+# A Base LangGraph LLM app template with function calling capabilities 🚀
 
 ## 📖 Table of Contents
 * [Introduction](#-introduction)  
 * [Directory structure and file descriptions](#-directory-structure-and-file-descriptions)  
 * [Prerequisites](#-prerequisites)  
 * [Installation](#-installation)
-* [Configuration](#-configuration)
+* [Configuration](#-configuration) 
 * [Modifying and configuring the template](#-modifying-and-configuring-the-template)  
-* [Visualizing a workflow](#-visualizing-a-workflow)  
 * [Testing the template](#-testing-the-template)  
 * [Running the application locally](#-running-the-application-locally)  
-* [Deploying on IBM Cloud](#-deploying-on-ibm-cloud)  
+* [Deploying on IBM Cloud](#-deploying-on-ibm-cloud) 
 * [Querying the deployment](#-querying-the-deployment)  
 * [Running the graphical app locally](#-running-the-graphical-app-locally) 
-* [Evaluating agent](#-evaluating-agent) 
-* [Cloning and setting up the template (Optional)](#-cloning-and-setting-up-the-template-optional)  
+* [Evaluating agent](#-evaluating-agent)
+* [Cloning template (Optional)](#-cloning-template-optional)  
 
 ## 🤔 Introduction
 
-This repository provides a basic template for LLM apps built using LlamaIndex framework. It also makes it easy to deploy them as an AI service as part of IBM watsonx.ai for IBM Cloud[^1].
+This repository provides a basic template for LLM apps built using the LangGraph framework. It also makes it easy to deploy them as an AI service as part of IBM watsonx.ai for IBM Cloud[^1].
 
 An AI service is a deployable unit of code that encapsulates the logic of your generative AI use case. For an in-depth description of AI services, please refer to the [IBM watsonx.ai documentation](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ai-services-templates.html?context=wx&audience=wdp).
 
@@ -35,12 +34,11 @@ An AI service is a deployable unit of code that encapsulates the logic of your g
 The high level structure of the repository is as follows:  
 
 ```
-llamaindex-websearch-agent /
+langgraph-react-agent/
 ├── src/
-│   └── llama_index_workflow_agent_base/
+│   └── langgraph_react_agent_base/
 │       ├── agent.py
-│       ├── tools.py
-│       └── workflow.py
+│       └── tools.py
 ├── schema/
 ├── ai_service.py
 ├── config.toml.example
@@ -48,10 +46,10 @@ llamaindex-websearch-agent /
 └── pyproject.toml
 ```
 
-* **`llama_index_workflow_agent_base`** folder: Contains auxiliary files used by the deployed function. They provide various framework specific definitions and extensions. This folder is packaged and sent to IBM Cloud during deployment as a [package extension](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ml-create-custom-software-spec.html?context=wx&audience=wdp#custom-wml).  
+* **`langgraph-react-agent-base`** folder: Contains auxiliary files used by the deployed function. They provide various framework specific definitions and extensions. This folder is packaged and sent to IBM Cloud during deployment as a [package extension](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ml-create-custom-software-spec.html?context=wx&audience=wdp#custom-wml).  
 * **`schema`** folder: Contains request and response schemas for the `/ai_service` endpoint queries.  
 * **`ai_service.py`** file: Contains the function to be deployed as an AI service defining the application's logic  
-* **`config.toml.example`** file: A configuration file with placeholders that stores the deployment metadata. After downloading the template repository, copy the contents of the `config.toml.example` file to the `config.toml` file and fill in the required fields. `config.toml` file can also be used to tweak the model for your use case.
+* **`config.toml.example`**: A configuration file with placeholders that stores the deployment metadata. After downloading the template repository, copy the contents of the `config.toml.example` file to the `config.toml` file and fill in the required fields. `config.toml` file can also be used to tweak the model for your use case. 
 * **`template.env`**: A file with placeholders for necessary credentials that are essential to run some of the `ibm-watsonx-ai-cli` commands and to test agent locally. Copy the contents of the `template.env` file to the `.env` file and fill the required fields.
 
 ## 🛠 Prerequisites
@@ -72,7 +70,7 @@ To begin working with this template using the Command Line Interface (CLI), plea
 
 2. **Download template**:
    ```sh
-   watsonx-ai template new "base/llamaindex-websearch-agent"
+   watsonx-ai template new "base/langgraph-react-agent"
    ```
 
    Upon executing the above command, a prompt will appear requesting the user to specify the target directory for downloading the template. Once the template has been successfully downloaded, navigate to the designated template folder to proceed.
@@ -127,29 +125,18 @@ For detailed description and API please refer to the [IBM watsonx.ai Parameter S
 Sensitive data should not be passed unencrypted, e.g. in the configuration file. The recommended way to handle them is to make use of the [IBM Cloud® Secrets Manager](https://cloud.ibm.com/apidocs/secrets-manager/secrets-manager-v2). The approach to integrating the Secrets Manager's API with the app is for the user to decide on.  
 
 
-The [agent.py](src/llama_index_workflow_agent_base/agent.py) file builds app the workflow consisting of nodes and edges. The former define the logic for agents while the latter control the logic flow in the whole workflow.
-
-For detailed info on how to modify the workflow object please refer to [LlamaIndex's official docs](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
+The [agent.py](src/langgraph/agent.py) file builds app the graph consisting of nodes and edges. The former define the logic for agents while the latter control the logic flow in the whole graph.  
+For detailed info on how to modify the graph object please refer to [LangGraph's official docs](https://langchain-ai.github.io/langgraph/tutorials/multi_agent/multi-agent-collaboration/#create-graph)  
 
 
 The [ai_service.py](ai_service.py) file encompasses the core logic of the app alongside the way of authenticating the user to the IBM Cloud.  
 For a detailed breakdown of the ai-service's implementation please refer the [IBM Cloud docs](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ai-services-create.html?context=wx)  
 
 
-[tools.py](src/llama_index_workflow_agent_base/tools.py) file stores the definition for tools enhancing the chat model's capabilities.  
-In order to add new tool create a new function and add to the `TOOLS` list in the `extensions` module's [__init__.py](src/llama_index_workflow_agent_base/__init__.py)
+[tools.py](src/langgraph_react_agent_base/tools.py) file stores the definition for tools enhancing the chat model's capabilities.  
+In order to add new tool create a new function, wrap it with the `@tool` decorator and add to the `TOOLS` list in the `extensions` module's [__init__.py](src/langgraph_react_agent_base/__init__.py)
 
-## 📊 Visualizing a workflow  
-
-One of the key features of workflows is the built-in visualization capability. To generate a visual representation of a workflow, execute the following command:
-
-```sh
-python scripts/workflow_visualizer.py
-```  
-
-This command produces a graphical representation of the workflow, providing a clear overview of its structure and execution flow. The output will resemble the following:
-
-![Workflow visualization](assets/workflow_visualization.png)
+For more sophisticated use cases (like async tools), please refer to the [langchain docs](https://python.langchain.com/docs/how_to/custom_tools/#creating-tools-from-runnables).  
 
 ## 🧪 Testing the template
 
@@ -159,7 +146,7 @@ For exemplary purposes only the tools and some general utility functions are cov
 Running the below command will run the complete tests suite:
 ```sh
 pytest -r 'fEsxX' tests/
-```  
+```
 
 ## 💻 Running the application locally
 
@@ -251,6 +238,7 @@ Follow these steps to inference your deployment. The [query_existing_deployment.
 > [!WARNING]  
 > This flow is deprecated and will be removed in a future release. Please migrate to recommended flow as soon as possible.
 
+
 ## 🖥️ Running the graphical app locally
 
 You can also run the graphical application locally using the deployed model. All you need to do is deploy the model and follow the steps below. Detailed information for each app is available in its README file.
@@ -285,30 +273,145 @@ You can also run the graphical application locally using the deployed model. All
    watsonx-ai app run --dev
    ```
 
-   This soultion allows user to make changes to the source code while the app is running. Each time changes are saved the app reloads and is working with provided changes.
+   This solution allows user to make changes to the source code while the app is running. Each time changes are saved the app reloads and is working with provided changes.
 
 ## 📊 Evaluating agent
-If you want to evaluate your agent, you can do so using the following command.
+
+`IBM watsonx.ai CLI` allows you to evaluate agent responses using your own datasets prepared in JSONL format. It supports using multiple metrics for comprehensive evaluation. The metrics are calculated using the **IBM watsonx.governance SDK** library. You can find more details about these metrics in the official documentation [here](https://ibm.github.io/ibm-watsonx-gov/). If you want to evaluate your agent, you can do so using the following command.
+
+**Example usage:**
 
 ```bash
-$ watsonx-ai template eval --tests test.jsonl --metrics answer_similarity,answer_relevance --evaluator llm_as_judge
+$ watsonx-ai template eval --tests test1.jsonl,test2.jsonl --metrics answer_similarity,answer_relevance --evaluator llm_as_judge
 ```
 
 The `eval` command supports several options
 
-__Options:__
- - `--tests`: [Required] one or more input data files (in jsonl format) for evaluation
- - `--metrics`: [Optional] one or more evaluation metric. If multiple metrics are specified, they must be separated by a comma. If not specified all possible metrics will be used
- - `--evaluator`: [Optional] a model name for evaluation, or `llm_as_judge` can be used for a predefined choice (`meta-llama/llama-3-3-70b-instruct`, or `mistralai/mistral-small-3-1-24b-instruct-2503` if former is not available). If not provided, metrics are computed using the method `token_recall`.
+### Available options and arguments
 
-__Supported Evaluation Metrics__:
-- `answer_similarity` _(can be evaluated with `--evaluator`)_
-- `answer_relevance` _(can be evaluated with `--evaluator`)_
-- `text_reading_ease`
-- `unsuccessful_request_metric`
-- `text_grade_level`
+- `--help`: Show this message and exit.
+- `--tests`: **[Required]** one or more input data files (in JSONL format) for evaluation. If more than one evaluation file is provided, they must be separated by a comma.  
+ The required fields in the files are described in the section below.
+- `--metrics`: **[Optional]** one or more evaluation metrics. If multiple metrics are specified, they must be separated by a comma. If not specified all possible metrics will be used (answer_similarity, answer_relevance, text_reading_ease, unsuccessful_request_metric, text_grade_level)
+- `--evaluator`: **[Optional]** a model name for evaluation, or `llm_as_judge` can be used for a predefined choice (`meta-llama/llama-3-3-70b-instruct`, or `mistralai/mistral-small-3-1-24b-instruct-2503` if former is not available). 
+  - If not provided, metrics are computed using the `token_recall` method.  
+  - If provided, two metrics **answer similarity** and **answer relevance** are calculated using llm as judge method.  
+    The remaining metrics are still calculated using the rule-based method.
 
-The metrics are calculated using the **IBM watsonx.governance SDK** library. You can find more details about these metrics in the official documentation [here](https://ibm.github.io/ibm-watsonx-gov/).
+### Requirements
+
+* **IBM watsonx.ai for IBM Cloud**: Add your API key to the environment variables.
+* **IBM Cloud Pak® for Data**: Add either a username and password, or a username and API key, to the environment variables.
+
+
+All variables can be defined in a .env file.
+When selecting a specific model as the evaluation judge, ensure that the model is available in your space. By default, the evaluation uses:
+
+* `meta-llama/llama-3-3-70b-instruct`
+* `mistralai/mistral-small-3-1-24b-instruct-2503` (fallback if the first model is unavailable)
+
+If no evaluation model is specified, at least one of the above must be available in your space.
+
+### Evaluation data format
+
+For each file, metrics are calculated separately.  
+The data must be in JSONL format. Each row should contain two fields:  
+- `input`: a string representing the input.  
+- `ground_truth`: a list of strings representing the correct answers.  
+
+During evaluation, answers are generated based on the `input` and compared to the `ground_truth` only for metrics that require it.
+
+You can find an example data file [here](./benchmarking_data/benchmarking_data.jsonl).
+
+### Available types of metrics
+
+The evaluation supports the following metric types:
+
+- **answer_similarity**  
+  Measures how similar the agent’s response is to the `ground_truth`.  
+  By default, it uses the `token_recall` method. If the `--evaluator` flag is set, it switches to an LLM-based evaluation.
+
+- **answer_relevance**  
+  Measures how relevant the response is to the input query.  
+  By default, it also uses `token_recall`, but with `--evaluator`, it uses the LLM to judge relevance.
+
+- **text_reading_ease**  
+  Assesses the readability of the generated text using the Flesch Reading Ease formula.  
+  This metric always uses a fixed rule-based method and ignores the `--evaluator` flag.
+
+- **unsuccessful_request_metric**  
+  Checks whether the response indicates a failed or incomplete answer by scanning for predefined failure phrases.  
+  This is a rule-based check and does not change even if `--evaluator` is provided.
+
+- **text_grade_level**  
+  Estimates the U.S. school grade level required to understand the response using the Flesch–Kincaid Grade formula.  
+  This metric is rule-based and ignores the `--evaluator` setting.
+
+### Evaluation results
+
+* Metrics are calculated per test file.
+* Results are displayed in JSON format for each file and metric.
+* The output begins with summary information for the file and metrics, followed by row-level details.
+
+**Example: Single result for one metric**
+
+```JSON
+{
+  "name": "answer_similarity",
+  "method": "llm_as_judge",
+  "provider": "unitxt",
+  "value": 0.0,
+  "errors": null,
+  "additional_info": null,
+  "group": "answer_quality",
+  "thresholds": [
+    {
+      "type": "lower_limit",
+      "value": 0.7
+    }
+  ],
+  "min": 0.0,
+  "max": 0.0,
+  "mean": 0.0,
+  "total_records": 3,
+  "record_level_metrics": [
+    {
+      "name": "answer_similarity",
+      "method": "llm_as_judge",
+      "provider": "unitxt",
+      "value": 0.0,
+      "errors": null,
+      "additional_info": null,
+      "group": "answer_quality",
+      "thresholds": [
+        {
+          "type": "lower_limit",
+          "value": 0.7
+        }
+      ],
+      "record_id": "44e17041-51ac-4f65-8e2f-e9afd082b940",
+      "record_timestamp": null
+    },
+    {
+      "name": "answer_similarity",
+      "method": "llm_as_judge",
+      "provider": "unitxt",
+      "value": 0.0,
+      "errors": null,
+      "additional_info": null,
+      "group": "answer_quality",
+      "thresholds": [
+        {
+          "type": "lower_limit",
+          "value": 0.7
+        }
+      ],
+      "record_id": "67b58b7e-2990-4559-97a9-680e01068e3f",
+      "record_timestamp": null
+    }
+  ]
+}
+```
 
 > [!WARNING]  
 > The `eval` command requires Python version >=3.10,<=3.12
@@ -319,6 +422,9 @@ The metrics are calculated using the **IBM watsonx.governance SDK** library. You
 
 ---
 
+
+
+
 ## 💾 Cloning template (Optional)
 
 1. **Clone the repo** (sparse checkout):
@@ -328,9 +434,9 @@ The metrics are calculated using the **IBM watsonx.governance SDK** library. You
    ```sh
    git clone --no-tags --depth 1 --single-branch --filter=tree:0 --sparse https://github.com/IBM/watsonx-developer-hub.git
    cd watsonx-developer-hub
-   git sparse-checkout add agents/base/llamaindex-websearch-agent
-   cd agents/base/llamaindex-websearch-agent/
+   git sparse-checkout add agents/base/langgraph_react_agent
+   cd agents/base/langgraph_react_agent/
    ```
 
 > [!NOTE]
-> From now on it'll be considered that the working directory is `watsonx-developer-hub/agents/base/llamaindex-websearch-agent`  
+> From now on it'll be considered that the working directory is `watsonx-developer-hub/agents/base/langgraph-react-agent/`  
