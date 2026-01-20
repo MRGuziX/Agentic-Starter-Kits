@@ -36,7 +36,7 @@ stream = True
 context = SimpleContext()
 ai_service_resp_func = deployable_ai_service(
     context=context,
-    url=base_url if base_url else None,
+    base_url=base_url,
     model_id=model_id
 )[stream]
 

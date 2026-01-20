@@ -1,4 +1,4 @@
-def deployable_ai_service(context, url=None, model_id=None):
+def deployable_ai_service(context, base_url=None, model_id=None):
     import asyncio
     import nest_asyncio
     import threading
@@ -21,7 +21,7 @@ def deployable_ai_service(context, url=None, model_id=None):
     if not api_key:
         raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
 
-    if not url:
+    if not base_url:
         base_url = get_env_var("BASE_URL")
         if not base_url:
             raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
@@ -211,7 +211,7 @@ def deployable_ai_service(context, url=None, model_id=None):
             context_window=128000
         )
 
-        workflow = get_workflow_closure(client, model_id, base_url=base_url)
+        workflow = get_workflow_closure(model_id=model_id, base_url=base_url)
 
         payload = context.get_json()
         messages = payload.get("messages", [])
@@ -254,7 +254,7 @@ def deployable_ai_service(context, url=None, model_id=None):
             is_function_calling_model=True,
             context_window=128000
         )
-        workflow = get_workflow_closure(client, model_id, base_url=base_url)
+        workflow = get_workflow_closure(model_id=model_id, base_url=base_url)
 
         payload = context.get_json()
         headers = context.get_headers()

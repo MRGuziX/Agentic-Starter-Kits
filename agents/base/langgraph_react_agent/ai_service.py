@@ -11,14 +11,21 @@ from langchain_core.messages import (
 )
 
 
-def deployable_ai_service(context, url=None, model_id=None):
-    api_key = get_env_var("API_KEY")
+def deployable_ai_service(
+        context,
+        api_key=None,
+        base_url=None,
+        model_id=None
+):
     if not api_key:
-        raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
+        api_key = get_env_var("API_KEY")
+        if not api_key:
+            raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
 
-    base_url = get_env_var("BASE_URL")
     if not base_url:
-        raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
+        base_url = get_env_var("BASE_URL")
+        if not base_url:
+            raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
 
     if not model_id:
         model_id = get_env_var("MODEL_ID")
@@ -30,7 +37,7 @@ def deployable_ai_service(context, url=None, model_id=None):
         base_url=base_url,
     )
 
-    graph = get_graph_closure(client, model_id, base_url=base_url)
+    graph = get_graph_closure(model_id=model_id, base_url=base_url)
 
     def get_formatted_message(
             resp: BaseMessage, is_assistant: bool = False

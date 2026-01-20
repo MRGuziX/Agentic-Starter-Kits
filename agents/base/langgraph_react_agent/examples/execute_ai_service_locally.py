@@ -1,8 +1,6 @@
-import os
-
-from agents.base.langgraph_react_agent.ai_service import deployable_ai_service
-
 from _interactive_chat import InteractiveChat
+from agents.base.langgraph_react_agent.ai_service import deployable_ai_service
+from utils import get_env_var
 
 
 class SimpleContext:
@@ -17,11 +15,17 @@ class SimpleContext:
     def get_headers(self):
         return {}
 
+api_key = get_env_var("API_KEY")
+if not api_key:
+    raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
 
+base_url = get_env_var("BASE_URL")
+if not base_url:
+    raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
 
-api_key = os.getenv("API_KEY", "").strip()
-base_url = os.getenv("BASE_URL", "").strip()
-model_id = os.getenv("MODEL_ID", "gpt-3.5-turbo").strip()
+model_id = get_env_var("MODEL_ID")
+if not model_id:
+    raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
@@ -31,7 +35,8 @@ stream = True
 context = SimpleContext()
 ai_service_resp_func = deployable_ai_service(
     context=context,
-    url=base_url if base_url else None,
+    api_key=api_key,
+    base_url=base_url,
     model_id=model_id
 )[stream]
 
