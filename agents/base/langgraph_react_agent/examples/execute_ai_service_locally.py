@@ -1,18 +1,7 @@
 import os
-import sys
-from pathlib import Path
 
-from dotenv import load_dotenv
+from agents.base.langgraph_react_agent.ai_service import deployable_ai_service
 
-# Add parent directory to path to allow imports
-parent_dir = Path(__file__).parent.parent
-examples_dir = Path(__file__).parent
-src_dir = parent_dir / "src"
-sys.path.insert(0, str(parent_dir))
-sys.path.insert(0, str(examples_dir))
-sys.path.insert(0, str(src_dir))
-
-from ai_service import deployable_ai_service
 from _interactive_chat import InteractiveChat
 
 
@@ -29,12 +18,7 @@ class SimpleContext:
         return {}
 
 
-# Load environment variables from parent directory
-dotenv_path = parent_dir / ".env"
-if dotenv_path.is_file():
-    load_dotenv(dotenv_path=dotenv_path, override=True)
 
-# Get configuration from environment variables
 api_key = os.getenv("API_KEY", "").strip()
 base_url = os.getenv("BASE_URL", "").strip()
 model_id = os.getenv("MODEL_ID", "gpt-3.5-turbo").strip()

@@ -3,8 +3,7 @@ from typing import Callable
 from llama_index.llms.openai_like import OpenAILike
 from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base import TOOLS
 from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.workflow import FunctionCallingAgent
-
-from apps.utils import get_env_var
+from utils import get_env_var
 
 
 def get_workflow_closure(

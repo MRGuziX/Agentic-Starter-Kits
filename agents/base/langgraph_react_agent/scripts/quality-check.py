@@ -1,6 +1,3 @@
-# Assisted by watsonx Code Assistant
-
-# quality-check.py
 import json
 from pathlib import Path
 import warnings

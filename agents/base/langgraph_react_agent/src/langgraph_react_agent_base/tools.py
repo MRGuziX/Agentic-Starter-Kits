@@ -12,4 +12,4 @@ def dummy_web_search(query: str) -> list[str]:
     Returns:
         Dummy list of web search results.
     """
-    return ["IBM watsonx.ai"]
+    return ["RedHat"]
