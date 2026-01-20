@@ -15,6 +15,7 @@ class SimpleContext:
     def get_headers(self):
         return {}
 
+
 api_key = get_env_var("API_KEY")
 if not api_key:
     raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
