@@ -1,10 +1,10 @@
-from langgraph_react_agent_base import (
+from agents.base.langgraph_react_agent.src.langgraph_react_agent_base.tools import (
     dummy_web_search
 )
 
 
 class TestTools:
     def test_dummy_web_search(self):
-        query = "IBM"
+        query = "RedHat"
         result = dummy_web_search.invoke(query)
-        assert "IBM" in result[0]  # Check if the result contains 'IBM'
+        assert "RedHat" in result[0]  # Check if the result contains 'RedHat'

@@ -2,14 +2,12 @@ from typing import Callable, Any
 
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
-from agents.base.langgraph_react_agent.src.langgraph_react_agent_base import TOOLS
-from openai import OpenAI
 
-from apps.utils import get_env_var
+from agents.base.langgraph_react_agent.src.langgraph_react_agent_base import TOOLS
+from utils import get_env_var
 
 
 def get_graph_closure(
-        client: OpenAI,
         model_id: str,
         base_url: str = None
 ) -> Callable:

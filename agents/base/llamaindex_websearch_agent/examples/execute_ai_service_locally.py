@@ -1,19 +1,18 @@
-import os
-import sys
-from pathlib import Path
-
-from dotenv import load_dotenv
-
-# Add parent directory to path to allow imports
-parent_dir = Path(__file__).parent.parent
-examples_dir = Path(__file__).parent
-src_dir = parent_dir / "src"
-sys.path.insert(0, str(parent_dir))
-sys.path.insert(0, str(examples_dir))
-sys.path.insert(0, str(src_dir))
-
-from ai_service import deployable_ai_service
 from _interactive_chat import InteractiveChat
+from agents.base.llamaindex_websearch_agent.ai_service import deployable_ai_service
+from utils import get_env_var
+
+api_key = get_env_var("API_KEY")
+if not api_key:
+    raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
+
+base_url = get_env_var("BASE_URL")
+if not base_url:
+    raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
+
+model_id = get_env_var("MODEL_ID")
+if not model_id:
+    raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
 
 class SimpleContext:
@@ -29,16 +28,6 @@ class SimpleContext:
         return {}
 
 
-# Load environment variables from parent directory
-dotenv_path = parent_dir / ".env"
-if dotenv_path.is_file():
-    load_dotenv(dotenv_path=dotenv_path, override=True)
-
-# Get configuration from environment variables
-api_key = os.getenv("API_KEY", "").strip()
-base_url = os.getenv("BASE_URL", "").strip()
-model_id = os.getenv("MODEL_ID", "gpt-3.5-turbo").strip()
-
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
     base_url = base_url.rstrip('/') + '/v1'
@@ -47,7 +36,7 @@ stream = True
 context = SimpleContext()
 ai_service_resp_func = deployable_ai_service(
     context=context,
-    url=base_url if base_url else None,
+    base_url=base_url,
     model_id=model_id
 )[stream]
 

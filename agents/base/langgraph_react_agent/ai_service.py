@@ -1,39 +1,46 @@
-def deployable_ai_service(context, url=None, model_id=None):
-    from typing import Generator
+from utils import get_env_var
+from typing import Generator
 
-    from langgraph_react_agent_base.agent import get_graph_closure
-    from openai import OpenAI
-    from langchain_core.messages import (
-        BaseMessage,
-        HumanMessage,
-        AIMessage,
-        SystemMessage,
-    )
+from agents.base.langgraph_react_agent.src.langgraph_react_agent_base.agent import get_graph_closure
+from openai import OpenAI
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    AIMessage,
+    SystemMessage,
+)
 
-    # Use OpenAI client to connect to RHOAI/LlamaStack (OpenAI-compatible endpoint)
-    # url should point to the LlamaStack server endpoint
-    # For RHOAI/LlamaStack, we typically don't need authentication, but if needed, 
-    # it can be passed via api_key parameter
-    api_key = context.generate_token() if hasattr(context, 'generate_token') else "not-needed"
-    
-    # Construct base URL - if url is provided, use it; otherwise construct from context
-    base_url = url
-    if not base_url and hasattr(context, 'get_base_url'):
-        base_url = context.get_base_url()
-    
-    # Ensure base_url ends with /v1 for OpenAI compatibility
-    if base_url and not base_url.endswith('/v1'):
-        base_url = base_url.rstrip('/') + '/v1'
+
+def deployable_ai_service(
+        context,
+        api_key=None,
+        base_url=None,
+        model_id=None
+):
+    if not api_key:
+        api_key = get_env_var("API_KEY")
+        if not api_key:
+            raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
+
+    if not base_url:
+        base_url = get_env_var("BASE_URL")
+        if not base_url:
+            raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
+
+    if not model_id:
+        model_id = get_env_var("MODEL_ID")
+        if not model_id:
+            raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
     client = OpenAI(
         api_key=api_key,
         base_url=base_url,
     )
 
-    graph = get_graph_closure(client, model_id, base_url=base_url)
+    graph = get_graph_closure(model_id=model_id, base_url=base_url)
 
     def get_formatted_message(
-        resp: BaseMessage, is_assistant: bool = False
+            resp: BaseMessage, is_assistant: bool = False
     ) -> dict | None:
         role = resp.type
 
@@ -125,7 +132,6 @@ def deployable_ai_service(context, url=None, model_id=None):
         Please note that the `system message` MUST be placed first in the list of messages!
         """
 
-        # OpenAI client doesn't need token refresh like AutoX
         # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])
@@ -180,7 +186,6 @@ def deployable_ai_service(context, url=None, model_id=None):
         headers = context.get_headers()
         is_assistant = headers.get("X-Ai-Interface") == "assistant"
 
-        # OpenAI client doesn't need token refresh like AutoX
         # Token is set during client initialization
         payload = context.get_json()
         raw_messages = payload.get("messages", [])
@@ -214,7 +219,7 @@ def deployable_ai_service(context, url=None, model_id=None):
                 continue
 
             if (
-                message := get_formatted_message(msg_obj, is_assistant=is_assistant)
+                    message := get_formatted_message(msg_obj, is_assistant=is_assistant)
             ) is not None:
                 chunk_response = {
                     "choices": [
