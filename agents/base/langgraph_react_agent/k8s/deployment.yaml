@@ -1,0 +1,81 @@
+# Deployment for LangGraph React Agent
+#
+# Before deploying, you need to create:
+#
+# 1. Secret for API_KEY (required):
+#    oc create secret generic langgraph-react-agent-secrets \
+#      --from-literal=api-key='YOUR_API_KEY_HERE'
+#
+# 2. ConfigMap for BASE_URL and MODEL_ID (optional):
+#    oc create configmap langgraph-react-agent-config \
+#      --from-literal=base-url='https://your-endpoint.com/v1' \
+#      --from-literal=model-id='redhataillama-31-8b-instruct'
+#
+# 3. Update the image on line 35: image: "Quay image"
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langgraph-react-agent
+  labels:
+    app: langgraph-react-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langgraph-react-agent
+  template:
+    metadata:
+      labels:
+        app: langgraph-react-agent
+    spec:
+      containers:
+      - name: langgraph-react-agent
+        # TODO: Replace with your actual image
+        image: "Quay image"
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PORT
+          value: "8080"
+        # API_KEY from Secret (secure)
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: langgraph-react-agent-secrets
+              key: api-key
+        # BASE_URL from ConfigMap (optional)
+        - name: BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: langgraph-react-agent-config
+              key: base-url
+              optional: true
+        # MODEL_ID from ConfigMap (optional, has default in code)
+        - name: MODEL_ID
+          valueFrom:
+            configMapKeyRef:
+              name: langgraph-react-agent-config
+              key: model-id
+              optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
