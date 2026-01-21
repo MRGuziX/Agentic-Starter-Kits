@@ -23,7 +23,7 @@ class InteractiveChat:
         self.questions = (
             (
                 "Hi! How are you?",
-                "Kindly use the dummy_web_search tool to retrieve information about IBM.",
+                "What print() in python code language do?",
             )
             if questions is None
             else questions

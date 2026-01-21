@@ -100,11 +100,12 @@ class FunctionCallingAgent(Workflow):
 
         for tool_call in tool_calls:
             tool = tools_by_name.get(tool_call.tool_name)
-            additional_kwargs = {
-                "tool_call_id": tool_call.tool_id,
-                "name": tool.metadata.get_name(),
-            }
             if not tool:
+                # Tool doesn't exist - use tool_call name for additional_kwargs
+                additional_kwargs = {
+                    "tool_call_id": tool_call.tool_id,
+                    "name": tool_call.tool_name,
+                }
                 tool_msgs.append(
                     ChatMessage(
                         role="tool",
@@ -113,6 +114,12 @@ class FunctionCallingAgent(Workflow):
                     )
                 )
                 continue
+            
+            # Tool exists - use tool metadata for additional_kwargs
+            additional_kwargs = {
+                "tool_call_id": tool_call.tool_id,
+                "name": tool.metadata.get_name(),
+            }
 
             try:
                 tool_output = tool(**tool_call.tool_kwargs)
