@@ -1,4 +1,4 @@
-def dummy_web_search(input_data: str) -> list[str]:
+def dummy_web_search(query: str) -> list[str]:
     """
     Web search tool that return static list of strings.
 
@@ -8,4 +8,4 @@ def dummy_web_search(input_data: str) -> list[str]:
     Returns:
         Dummy list of web search results.
     """
-    return ["RHOAI AutoX"]
+    return ["RedHat"]

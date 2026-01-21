@@ -1,3 +1,6 @@
+from utils import get_env_var
+
+
 def deployable_ai_service(context, base_url=None, model_id=None):
     import asyncio
     import nest_asyncio
@@ -15,7 +18,6 @@ def deployable_ai_service(context, base_url=None, model_id=None):
         InputEvent,
         StartEvent,
     )
-    from utils import get_env_var
 
     api_key = get_env_var("API_KEY")
     if not api_key:
