@@ -1,6 +1,7 @@
 from _interactive_chat import InteractiveChat
-from agents.base.llamaindex_websearch_agent.ai_service import deployable_ai_service
+from agent_examples.llamaindex_websearch_agent_example.ai_service import deployable_ai_service
 from utils import get_env_var
+
 
 api_key = get_env_var("API_KEY")
 if not api_key:
