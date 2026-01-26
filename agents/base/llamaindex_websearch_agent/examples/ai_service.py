@@ -1,24 +1,23 @@
 from utils import get_env_var
+import asyncio
+import nest_asyncio
+import threading
+import json
+from typing import Generator, AsyncGenerator
+from llama_index.llms.openai_like import OpenAILike
+
+from llama_index.core.base.llms.types import ChatMessage
+
+from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.agent import get_workflow_closure
+from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.workflow import (
+    ToolCallEvent,
+    StopEvent,
+    InputEvent,
+    StartEvent,
+)
 
 
 def deployable_ai_service(context, base_url=None, model_id=None):
-    import asyncio
-    import nest_asyncio
-    import threading
-    import json
-    from typing import Generator, AsyncGenerator
-    from llama_index.llms.openai_like import OpenAILike
-
-    from llama_index.core.base.llms.types import ChatMessage
-
-    from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.agent import get_workflow_closure
-    from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.workflow import (
-        ToolCallEvent,
-        StopEvent,
-        InputEvent,
-        StartEvent,
-    )
-
     api_key = get_env_var("API_KEY")
     if not api_key:
         raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
