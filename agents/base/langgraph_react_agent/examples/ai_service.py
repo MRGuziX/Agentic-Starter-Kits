@@ -12,16 +12,12 @@ def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
     graph = get_graph_closure(model_id=model_id, base_url=base_url)
 
     def get_formatted_message(resp: BaseMessage) -> dict | None:
-        # 1. SHOW Tool Output (Previously hidden)
         if isinstance(resp, ToolMessage):
-            # We explicitly label it as 'tool' so you can see the raw data
             return {
                 "role": "tool",
                 "content": f"\n🔧 Tool Output:\n {resp.content}"
             }
 
-        # 2. SHOW Tool Calls (The Agent asking to use the tool)
-        # (Optional: if you want to see the request "I want to call search with query 'sun'")
         if hasattr(resp, "tool_calls") and resp.tool_calls:
             tc = resp.tool_calls[0]
             return {
@@ -29,7 +25,6 @@ def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
                 "content": f"🤔 I am calling tool '{tc['name']}' with args: {tc['args']}"
             }
 
-        # 3. Standard Assistant Text
         if resp.content:
             return {"role": "assistant", "content": resp.content}
 
@@ -45,7 +40,6 @@ def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
         return HumanMessage(content=content)
 
     def generate(context) -> dict:
-        # Non-streaming implementation (Logic remains similar)
         payload = context.get_json()
         messages = [convert_dict_to_message(m) for m in payload.get("messages", [])]
         result = graph.invoke({"messages": messages})

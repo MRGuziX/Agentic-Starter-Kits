@@ -2,7 +2,6 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
 
-# 1. Define the input schema explicitly
 class SearchInput(BaseModel):
     query: str = Field(description="The value to search for.")
 
