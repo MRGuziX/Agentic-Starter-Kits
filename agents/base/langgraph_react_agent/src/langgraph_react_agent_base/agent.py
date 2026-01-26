@@ -40,9 +40,7 @@ def get_graph_closure(
         base_url=base_url,
     )
 
-    system_prompt = """You are a helpful assistant. 
-    CRITICAL: You MUST use the 'search' tool whenever the user asks about "password in redhat", "what is", or current events. 
-    Do not answer from your own knowledge if a tool is available."""
+    system_prompt = "You are a helpful assistant. When using tools, provide only the required string or number for the arguments, never the schema description."
 
     # 3. Create the LangGraph ReAct Agent
     # This automatically binds tools and sets up the graph loop

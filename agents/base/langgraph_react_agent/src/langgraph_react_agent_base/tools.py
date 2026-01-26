@@ -11,10 +11,13 @@ class MathInput(BaseModel):
     query: str = Field(description="The math problem to solve.")
 
 
-@tool("search", args_schema=SearchInput)
+@tool("search", parse_docstring=True)
 def dummy_web_search(query: str) -> list[str]:
     """
-    Web search tool that returns a static list of strings.
+    Search the web for information about a specific topic.
+
+    Args:
+        query: The specific text string to search for. Example: "RedHat"
     """
     return ["RedHat"]
 
