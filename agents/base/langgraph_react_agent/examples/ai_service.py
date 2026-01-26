@@ -1,237 +1,96 @@
-from utils import get_env_var
 from typing import Generator
-
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, BaseMessage, ToolMessage
 from agents.base.langgraph_react_agent.src.langgraph_react_agent_base.agent import get_graph_closure
-from openai import OpenAI
-from langchain_core.messages import (
-    BaseMessage,
-    HumanMessage,
-    AIMessage,
-    SystemMessage,
-)
+from utils import get_env_var
 
 
-def deployable_ai_service(
-        context,
-        api_key=None,
-        base_url=None,
-        model_id=None
-):
-    if not api_key:
-        api_key = get_env_var("API_KEY")
-        if not api_key:
-            raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
-
-    if not base_url:
-        base_url = get_env_var("BASE_URL")
-        if not base_url:
-            raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
-
-    if not model_id:
-        model_id = get_env_var("MODEL_ID")
-        if not model_id:
-            raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
-
-    client = OpenAI(
-        api_key=api_key,
-        base_url=base_url,
-    )
+def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
+    if not api_key: api_key = get_env_var("API_KEY")
+    if not base_url: base_url = get_env_var("BASE_URL")
+    if not model_id: model_id = get_env_var("MODEL_ID")
 
     graph = get_graph_closure(model_id=model_id, base_url=base_url)
 
-    def get_formatted_message(
-            resp: BaseMessage, is_assistant: bool = False
-    ) -> dict | None:
-        role = resp.type
+    def get_formatted_message(resp: BaseMessage) -> dict | None:
+        # 1. SHOW Tool Output (Previously hidden)
+        if isinstance(resp, ToolMessage):
+            # We explicitly label it as 'tool' so you can see the raw data
+            return {
+                "role": "tool",
+                "content": f"\n🔧 Tool Output:\n {resp.content}"
+            }
 
+        # 2. SHOW Tool Calls (The Agent asking to use the tool)
+        # (Optional: if you want to see the request "I want to call search with query 'sun'")
+        if hasattr(resp, "tool_calls") and resp.tool_calls:
+            tc = resp.tool_calls[0]
+            return {
+                "role": "assistant",
+                "content": f"🤔 I am calling tool '{tc['name']}' with args: {tc['args']}"
+            }
+
+        # 3. Standard Assistant Text
         if resp.content:
-            if role in {"AIMessageChunk", "ai"}:
-                return {"role": "assistant", "content": resp.content}
-            elif role == "tool":
-                if is_assistant:
-                    return {
-                        "role": "assistant",
-                        "step_details": {
-                            "type": "tool_response",
-                            "id": resp.id,
-                            "tool_call_id": resp.tool_call_id,
-                            "name": resp.name,
-                            "content": resp.content,
-                        },
-                    }
-                else:
-                    return {
-                        "role": role,
-                        "id": resp.id,
-                        "tool_call_id": resp.tool_call_id,
-                        "name": resp.name,
-                        "content": resp.content,
-                    }
-        elif role == "ai":  # this implies resp.additional_kwargs
-            if additional_kw := resp.additional_kwargs:
-                tool_call = additional_kw["tool_calls"][0]
-                if is_assistant:
-                    return {
-                        "role": "assistant",
-                        "step_details": {
-                            "type": "tool_calls",
-                            "tool_calls": [
-                                {
-                                    "id": tool_call["id"],
-                                    "name": tool_call["function"]["name"],
-                                    "args": tool_call["function"]["arguments"],
-                                }
-                            ],
-                        },
-                    }
-                else:
-                    return {
-                        "role": "assistant",
-                        "tool_calls": [
-                            {
-                                "id": tool_call["id"],
-                                "type": "function",
-                                "function": {
-                                    "name": tool_call["function"]["name"],
-                                    "arguments": tool_call["function"]["arguments"],
-                                },
-                            }
-                        ],
-                    }
+            return {"role": "assistant", "content": resp.content}
+
+        return None
 
     def convert_dict_to_message(_dict: dict) -> BaseMessage:
-        """Convert user message in dict to langchain_core.messages.BaseMessage"""
-
-        if _dict["role"] == "assistant":
-            return AIMessage(content=_dict["content"])
-        elif _dict["role"] == "system":
-            return SystemMessage(content=_dict["content"])
-        else:
-            return HumanMessage(content=_dict["content"])
+        role = _dict.get("role")
+        content = _dict.get("content", "")
+        if role == "assistant":
+            return AIMessage(content=content)
+        elif role == "system":
+            return SystemMessage(content=content)
+        return HumanMessage(content=content)
 
     def generate(context) -> dict:
-        """
-        The `generate` function handles the REST call to the inference endpoint
-        POST /ml/v4/deployments/{id_or_name}/ai_service
-
-        The generate function should return a dict
-
-        A JSON body sent to the above endpoint should follow the format:
-        {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that uses tools to answer questions in detail.",
-                },
-                {
-                    "role": "user",
-                    "content": "Hello!",
-                },
-            ]
-        }
-        Please note that the `system message` MUST be placed first in the list of messages!
-        """
-
-        # Token is set during client initialization
+        # Non-streaming implementation (Logic remains similar)
         payload = context.get_json()
-        raw_messages = payload.get("messages", [])
-        messages = [convert_dict_to_message(_dict) for _dict in raw_messages]
+        messages = [convert_dict_to_message(m) for m in payload.get("messages", [])]
+        result = graph.invoke({"messages": messages})
+        final_msg = result["messages"][-1]
 
-        if messages and messages[0].type == "system":
-            agent = graph(messages[0])
-            del messages[0]
-        else:
-            agent = graph()
-
-        # Invoke agent
-        generated_response = agent.invoke({"messages": messages})
-
-        choices = []
-        execute_response = {
+        return {
             "headers": {"Content-Type": "application/json"},
-            "body": {"choices": choices},
-        }
-
-        choices.append(
-            {
-                "index": 0,
-                "message": get_formatted_message(generated_response["messages"][-1]),
+            "body": {
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": final_msg.content}
+                }]
             }
-        )
-
-        return execute_response
-
-    def generate_stream(context) -> Generator[dict, ..., ...]:
-        """
-        The `generate_stream` function handles the REST call to the Server-Sent Events (SSE) inference endpoint
-        POST /ml/v4/deployments/{id_or_name}/ai_service_stream
-
-        The generate function should return a dict
-
-        A JSON body sent to the above endpoint should follow the format:
-        {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that uses tools to answer questions in detail.",
-                },
-                {
-                    "role": "user",
-                    "content": "Hello!",
-                },
-            ]
         }
-        Please note that the `system message` MUST be placed first in the list of messages!
-        """
-        headers = context.get_headers()
-        is_assistant = headers.get("X-Ai-Interface") == "assistant"
 
-        # Token is set during client initialization
+    def generate_stream(context) -> Generator[dict, None, None]:
         payload = context.get_json()
-        raw_messages = payload.get("messages", [])
-        messages = [convert_dict_to_message(_dict) for _dict in raw_messages]
+        messages = [convert_dict_to_message(m) for m in payload.get("messages", [])]
 
-        if messages and messages[0].type == "system":
-            agent = graph(messages[0])
-            del messages[0]
-        else:
-            agent = graph()
-
-        response_stream = agent.stream(
-            {"messages": messages}, stream_mode=["updates", "messages"]
+        response_stream = graph.stream(
+            {"messages": messages},
+            stream_mode="updates"
         )
 
-        for chunk_type, data in response_stream:
-            if chunk_type == "messages":
-                msg_obj = data[0]
-                if msg_obj.type == "tool":
-                    continue
-            elif chunk_type == "updates":
-                if agent := data.get("agent"):
-                    msg_obj = agent["messages"][0]
-                    if msg_obj.response_metadata.get("finish_reason") == "stop":
-                        continue
-                elif tool := data.get("tools"):
-                    msg_obj = tool["messages"][0]
-                else:
-                    continue
-            else:
-                continue
+        for update in response_stream:
+            node_name = list(update.keys())[0]
+            data = update[node_name]
 
-            if (
-                    message := get_formatted_message(msg_obj, is_assistant=is_assistant)
-            ) is not None:
-                chunk_response = {
-                    "choices": [
-                        {
-                            "index": 0,
-                            "delta": message,
-                            "finish_reason": msg_obj.response_metadata.get(
-                                "finish_reason"
-                            ),
+            if "messages" in data:
+                # Handle cases where multiple messages might be in one update
+                msgs = data["messages"]
+                if not isinstance(msgs, list):
+                    msgs = [msgs]
+
+                for msg_obj in msgs:
+                    message = get_formatted_message(msg_obj)
+
+                    # Only yield if it's a valid text message for the user
+                    if message:
+                        yield {
+                            "choices": [{
+                                "index": 0,
+                                "delta": message,
+                                "finish_reason": None
+                            }]
                         }
-                    ]
-                }
-                yield chunk_response
 
     return generate, generate_stream

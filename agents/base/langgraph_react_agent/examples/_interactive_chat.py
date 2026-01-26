@@ -16,20 +16,17 @@ class InteractiveChat:
         self._ordered_list = lambda seq_: "\n".join(
             f"\t{i}) {k}" for i, k in enumerate(seq_, 1)
         )
-        self._delta_start = False
         self.verbose = verbose
         self.stream = stream
+        self._last_role = None  # Tracks role changes to split headers
 
         self.questions = ("Hi! How are you?",) if questions is None else questions
-
-        self._help_message = textwrap.dedent(
-            """
+        self._help_message = textwrap.dedent("""
         The following commands are supported:
           --> help | h : prints this help message
           --> quit | q : exits the prompt and ends the program
           --> list_questions : prints a list of available questions
-        """
-        )
+        """)
 
     @property
     def questions(self) -> tuple:
@@ -38,91 +35,75 @@ class InteractiveChat:
     @questions.setter
     def questions(self, q: tuple) -> None:
         self._questions = q
-        self._questions_prompt = (
-            f"\tQuestions:\n{self._ordered_list(self._questions)}\n"
-        )
-
-    def _user_input_loop(self) -> Generator[tuple[str, str], None, None]:
-        print(self._help_message)
-
-        while True:
-            q = input("\nChoose a question or ask one of your own.\n --> ")
-
-            _ = yield q, "question"
+        self._questions_prompt = f"\tQuestions:\n{self._ordered_list(self._questions)}\n"
 
     def _print_message(self, choice: dict) -> None:
         if delta := choice.get("delta"):
-            if not self._delta_start:
-                header = f" {delta['role'].capitalize()} Message ".center(80, "=")
-                print("\n", header)
-                self._delta_start = (
-                        True
-                        and (choice.get("finish_reason") is None)
-                        and delta["role"] != "tool"
-                )
-            print(delta.get("content") or delta.get("tool_calls"), flush=True, end="")
+            current_role = delta.get("role")
+
+            # Check if we need to print a new header
+            if current_role != self._last_role:
+                display_names = {
+                    "tool_answer": "Answer from tool",
+                    "assistant_answer": "Assistant answer"
+                }
+                header_text = display_names.get(current_role, current_role.capitalize())
+                print(f"\n{f' {header_text} '.center(80, '=')}")
+                self._last_role = current_role
+
+            content = delta.get("content")
+            if content:
+                print(content, flush=True, end="")
         else:
-            header = f" {choice['message']['role'].capitalize()} Message ".center(
-                80, "="
-            )
-            print("\n", header)
-            print(f"{choice['message'].get('content', choice['message'])}")
+            # Non-streaming fallback
+            msg = choice.get("message", {})
+            header = f" {msg.get('role', 'Assistant').capitalize()} Message ".center(80, "=")
+            print(f"\n{header}\n{msg.get('content', '')}")
+
+    def _user_input_loop(self) -> Generator[tuple[str, str], None, None]:
+        print(self._help_message)
+        while True:
+            q = input("\nChoose a question or ask one of your own.\n --> ")
+            yield q, "question"
 
     def run(self) -> None:
-        # TODO implement signal handling (especially Ctrl-C)
+        user_loop = self._user_input_loop()
         while True:
             try:
-                q = None
+                action, stage = next(user_loop)
 
-                user_loop = self._user_input_loop()
+                if action in ["h", "help"]:
+                    print(self._help_message)
+                elif action in ["quit", "q"]:
+                    break
+                elif action == "list_questions":
+                    print(self._questions_prompt)
+                elif stage == "question":
+                    # Reset role tracking for new question
+                    self._last_role = None
 
-                for action, stage in user_loop:  # unsupported command support!
+                    user_content = action.strip()
+                    if action.isdigit():
+                        idx = int(action) - 1
+                        if 0 <= idx < len(self.questions):
+                            user_content = self.questions[idx]
+                            print(f"You chose: {user_content}\n")
 
-                    if action == "h" or action == "help":
-                        print(self._help_message)
-                    elif action == "quit" or action == "q":
-                        raise EOFError
+                    payload = {"messages": [{"role": "user", "content": user_content}]}
+                    resp = self.ai_service_invoke(payload)
 
-                    elif action == "list_questions":
-                        print(self._questions_prompt)
-
-                    elif stage == "question":
-                        user_message = {}
-                        # small caveat -- if user answers to the chat a single digit we'll treat it as trying to choose on of our self.questions
-                        if not action.isdigit():  # user defined question
-                            user_message["content"] = action.strip()
-                        else:
-                            number = int(action)
-
-                            print(f"you chose QUESTION {number}\n")
-                            if number > len(self.questions) or number < 0:
-                                print(
-                                    "provided numbers have to match the available numbers"
-                                )
-                            else:
-                                user_message["content"] = self.questions[number - 1]
-
-                        request_payload_json = {
-                            "messages": [{"role": "user", **user_message}]
-                        }
-
-                        resp = self.ai_service_invoke(request_payload_json)
-
-                        if self.stream:
-                            for r in resp:
-                                if type(r) == str:
-                                    r = json.loads(r)
-                                for c in r["choices"]:
-                                    self._print_message(c)
-                            self._delta_start = False
-                        else:
-                            resp_choices = resp.get("body", resp)["choices"]
-                            choices = (
-                                resp_choices if self.verbose else resp_choices[-1:]
-                            )
-
-                            for c in choices:
+                    if self.stream:
+                        for r in resp:
+                            if isinstance(r, str):
+                                r = json.loads(r)
+                            for c in r.get("choices", []):
                                 self._print_message(c)
+                        print()  # Final newline
+                    else:
+                        # Standard invoke handling
+                        choices = resp.get("body", {}).get("choices", [])
+                        for c in choices:
+                            self._print_message(c)
 
-            except EOFError:
+            except (EOFError, StopIteration):
                 break
