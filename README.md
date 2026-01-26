@@ -60,7 +60,12 @@ ollama serve
 
 ## Start llama-stack (example)
 ```bash
-llama-stack serve --host 0.0.0.0 --port 8000
+llama stack run ollama-config.yaml --port 8321
+```
+
+## Check if server is running and model is there
+```bash
+curl http://127.0.0.1:8321/v1/models
 ```
 
 Update `ollama-config.yaml` with your local settings, then follow the
