@@ -52,11 +52,25 @@ or
 ```bash
 pip install -r agents/base/llamaindex_websearch_agent/requirements.txt
 ```
+## Install Llama-Stack
+```bash
+pip install llama-stack llama-stack-client
+```
+```bash
+pip install ollama
+```
+```bash
+ollama pull llama3.2:3b
+```
 
 ## Start Ollama
 ```bash
 ollama serve
 ```
+
+Update `ollama-config.yaml` with your local settings, then follow the
+agent-specific README
+`agents/base/<choose_your_agent>/readme.md`
 
 ## Start llama-stack (example)
 ```bash
@@ -68,14 +82,11 @@ llama stack run ollama-config.yaml --port 8321
 curl http://127.0.0.1:8321/v1/models
 ```
 
-Update `ollama-config.yaml` with your local settings, then follow the
-agent-specific README:
-
-`agents/base/<choose_your_agent>/readme.md`
-
 ## Agents
 - LangGraph React agent: `agents/base/langgraph_react_agent/`
 - LlamaIndex websearch agent: `agents/base/llamaindex_websearch_agent/`
 
 ## Notes
 Each agent template has its own README with setup, configuration, and examples.
+
+You can take a look on Our `sample_ASK_notebook.ipynb` for some guidance.
