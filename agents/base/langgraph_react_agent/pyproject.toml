@@ -11,11 +11,11 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
-langchain-openai = "^0.2.0"
+langchain-openai = ">=1.0.0"
 openai = ">=1.0.0"
-langgraph = "^1.0.0"
-langgraph-prebuilt = "^1.0.0"
-langchain-core = "^0.3.0"
+langgraph = ">=1.0.0"
+langgraph-prebuilt = ">=1.0.0"
+langchain-core = ">=1.0.0"
 pytest = "^8.3.3"
 fastapi = "^0.115.0"
 uvicorn = {extras = ["standard"], version = "^0.32.0"}
