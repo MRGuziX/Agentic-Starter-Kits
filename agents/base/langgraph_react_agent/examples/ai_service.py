@@ -1,15 +1,21 @@
 from typing import Generator
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, BaseMessage, ToolMessage
 from agents.base.langgraph_react_agent.src.langgraph_react_agent_base.agent import get_graph_closure
-from utils import get_env_var
 
 
-def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
-    if not api_key: api_key = get_env_var("API_KEY")
-    if not base_url: base_url = get_env_var("BASE_URL")
-    if not model_id: model_id = get_env_var("MODEL_ID")
+def ai_stream_service(
+        context,
+        base_url=None,
+        model_id=None
+):
+    """
 
-    graph = get_graph_closure(model_id=model_id, base_url=base_url)
+    :param context:
+    :param base_url:
+    :param model_id:
+    :return:
+    """
+    agent = get_graph_closure(model_id=model_id, base_url=base_url)
 
     def get_formatted_message(resp: BaseMessage) -> dict | None:
         if isinstance(resp, ToolMessage):
@@ -42,7 +48,7 @@ def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
     def generate(context) -> dict:
         payload = context.get_json()
         messages = [convert_dict_to_message(m) for m in payload.get("messages", [])]
-        result = graph.invoke({"messages": messages})
+        result = agent.invoke({"messages": messages})
         final_msg = result["messages"][-1]
 
         return {
@@ -59,7 +65,7 @@ def deployable_ai_service(context, api_key=None, base_url=None, model_id=None):
         payload = context.get_json()
         messages = [convert_dict_to_message(m) for m in payload.get("messages", [])]
 
-        response_stream = graph.stream(
+        response_stream = agent.stream(
             {"messages": messages},
             stream_mode="updates"
         )

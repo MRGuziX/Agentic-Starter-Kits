@@ -1,5 +1,5 @@
 from _interactive_chat import InteractiveChat
-from agents.base.langgraph_react_agent.examples.ai_service import deployable_ai_service
+from agents.base.langgraph_react_agent.examples.ai_service import ai_stream_service
 from utils import get_env_var
 
 
@@ -15,7 +15,7 @@ class SimpleContext:
     def get_headers(self):
         return {}
 
-api_key = get_env_var("API_KEY")
+
 base_url = get_env_var("BASE_URL")
 model_id = get_env_var("MODEL_ID")
 
@@ -25,9 +25,8 @@ if base_url and not base_url.endswith('/v1'):
 
 stream = True
 context = SimpleContext()
-ai_service_resp_func = deployable_ai_service(
+ai_service_resp_func = ai_stream_service(
     context=context,
-    api_key=api_key,
     base_url=base_url,
     model_id=model_id
 )[stream]
