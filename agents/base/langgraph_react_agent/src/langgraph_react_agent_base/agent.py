@@ -12,12 +12,19 @@ def get_graph_closure(
         base_url: str = None,
         api_key: str = None,
 ) -> Any:
-    """
+    """Build and return a LangGraph ReAct agent with the configured LLM and tools.
 
-    :param model_id:
-    :param base_url:
-    :param api_key:
-    :return:
+    Creates a ChatOpenAI client, wires dummy_web_search and dummy_math tools,
+    and uses create_agent to produce a graph that runs the ReAct loop (reason,
+    act with tools, observe, repeat until a final answer).
+
+    Args:
+        model_id: LLM model identifier (e.g. for OpenAI-compatible API). Uses MODEL_ID env if omitted.
+        base_url: Base URL for the LLM API. Uses BASE_URL env if omitted.
+        api_key: API key for the LLM. Uses API_KEY env if omitted; required for non-local base_url.
+
+    Returns:
+        A LangGraph agent (CompiledGraph) that accepts {"messages": [...]} and returns updated state.
     """
 
     if not api_key:

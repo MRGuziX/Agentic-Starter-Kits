@@ -4,15 +4,18 @@ from utils import get_env_var
 
 
 class SimpleContext:
-    """Simple context object for local execution"""
+    """Simple context object for local execution that holds request payload and headers."""
 
     def __init__(self, payload=None):
+        """Store the initial request payload (or an empty dict)."""
         self.request_payload_json = payload or {}
 
     def get_json(self):
+        """Return the current request payload as a dict (e.g. messages for the agent)."""
         return self.request_payload_json
 
     def get_headers(self):
+        """Return request headers; empty dict for local execution."""
         return {}
 
 
@@ -33,6 +36,7 @@ ai_service_resp_func = ai_stream_service(
 
 
 def ai_service_invoke(payload):
+    """Run the AI service for one turn: set context from payload and return (stream or full) response."""
     context.request_payload_json = payload
     return ai_service_resp_func(context)
 
