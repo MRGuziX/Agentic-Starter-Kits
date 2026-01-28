@@ -1,18 +1,6 @@
 from _interactive_chat import InteractiveChat
-from agents.base.llamaindex_websearch_agent.examples.ai_service import deployable_ai_service
+from agents.base.llamaindex_websearch_agent.examples.ai_service import ai_stream_service
 from utils import get_env_var
-
-api_key = get_env_var("API_KEY")
-if not api_key:
-    raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
-
-base_url = get_env_var("BASE_URL")
-if not base_url:
-    raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
-
-model_id = get_env_var("MODEL_ID")
-if not model_id:
-    raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
 
 class SimpleContext:
@@ -28,13 +16,16 @@ class SimpleContext:
         return {}
 
 
+base_url = get_env_var("BASE_URL")
+model_id = get_env_var("MODEL_ID")
+
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
     base_url = base_url.rstrip('/') + '/v1'
 
 stream = True
 context = SimpleContext()
-ai_service_resp_func = deployable_ai_service(
+ai_service_resp_func = ai_stream_service(
     context=context,
     base_url=base_url,
     model_id=model_id
