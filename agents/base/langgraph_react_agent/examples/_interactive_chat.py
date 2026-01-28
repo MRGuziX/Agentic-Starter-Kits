@@ -5,6 +5,8 @@ from typing import Callable
 
 
 class InteractiveChat:
+    """Interactive REPL that prompts for user input and calls the AI service for each question."""
+
     def __init__(
             self,
             ai_service_invoke: Callable,
@@ -12,6 +14,7 @@ class InteractiveChat:
             stream: bool = False,
             verbose: bool = True,
     ) -> None:
+        """Set up the chat: invoke callable, optional preset questions, and stream/verbose flags."""
         self.ai_service_invoke = ai_service_invoke
         self._ordered_list = lambda seq_: "\n".join(
             f"\t{i}) {k}" for i, k in enumerate(seq_, 1)
@@ -30,14 +33,17 @@ class InteractiveChat:
 
     @property
     def questions(self) -> tuple:
+        """Return the tuple of preset questions (e.g. for list_questions)."""
         return self._questions
 
     @questions.setter
     def questions(self, q: tuple) -> None:
+        """Set preset questions and refresh the list shown by list_questions."""
         self._questions = q
         self._questions_prompt = f"\tQuestions:\n{self._ordered_list(self._questions)}\n"
 
     def _print_message(self, choice: dict) -> None:
+        """Print one choice from the AI response (streaming delta or full message) with role headers."""
         if delta := choice.get("delta"):
             current_role = delta.get("role")
 
@@ -61,12 +67,14 @@ class InteractiveChat:
             print(f"\n{header}\n{msg.get('content', '')}")
 
     def _user_input_loop(self) -> Generator[tuple[str, str], None, None]:
+        """Yield (user input line, stage) forever; stage is 'question' for normal prompts."""
         print(self._help_message)
         while True:
             q = input("\nChoose a question or ask one of your own.\n --> ")
             yield q, "question"
 
     def run(self) -> None:
+        """Run the REPL: read input, handle help/quit/list_questions, or send questions to the AI and print replies."""
         user_loop = self._user_input_loop()
         while True:
             try:
