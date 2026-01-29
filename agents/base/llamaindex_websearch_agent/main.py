@@ -7,7 +7,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from src.llama_index_workflow_agent_base.agent import get_workflow_closure
-
 from utils import get_env_var
 
 
