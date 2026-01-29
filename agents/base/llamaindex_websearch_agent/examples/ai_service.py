@@ -1,11 +1,9 @@
-from utils import get_env_var
 import asyncio
-import nest_asyncio
-import threading
 import json
+import threading
 from typing import Generator, AsyncGenerator
-from llama_index.llms.openai_like import OpenAILike
 
+import nest_asyncio
 from llama_index.core.base.llms.types import ChatMessage
 
 from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.agent import get_workflow_closure
@@ -17,21 +15,18 @@ from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.
 )
 
 
-def deployable_ai_service(context, base_url=None, model_id=None):
-    api_key = get_env_var("API_KEY")
-    if not api_key:
-        raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
+def ai_stream_service(
+        context,
+        base_url=None,
+        model_id=None
+):
+    """
 
-    if not base_url:
-        base_url = get_env_var("BASE_URL")
-        if not base_url:
-            raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
-
-    if not model_id:
-        model_id = get_env_var("MODEL_ID")
-        if not model_id:
-            raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
-
+    :param context:
+    :param base_url:
+    :param model_id:
+    :return:
+    """
     nest_asyncio.apply()  # We inject support for nested event loops
 
     persistent_loop = (
@@ -82,15 +77,12 @@ def deployable_ai_service(context, base_url=None, model_id=None):
     ) -> list | None:
 
         if isinstance(resp, StartEvent):
-
             return
 
         elif isinstance(resp, InputEvent):
 
             responses = []
-
             resp_input = resp.input
-
             last_assistant_index = None
 
             for index, message in enumerate(resp_input):
@@ -130,9 +122,7 @@ def deployable_ai_service(context, base_url=None, model_id=None):
         elif isinstance(resp, ToolCallEvent):
             # Tool calls
             responses = []
-
             for tool_call in resp.tool_calls:
-
                 arguments_str = json.dumps(tool_call.tool_kwargs)
 
                 if is_assistant:
@@ -180,37 +170,6 @@ def deployable_ai_service(context, base_url=None, model_id=None):
             return [to_queue]
 
     async def generate_async(context) -> dict:
-        """
-        The `generate` function handles the REST call to the inference endpoint
-        POST /ml/v4/deployments/{id_or_name}/ai_service
-
-        The generate function should return a dict
-        The following optional keys are supported currently
-        - data
-
-        A JSON body sent to the above endpoint should follow the format:
-        {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that uses tools to answer questions in detail.",
-                },
-                {
-                    "role": "user",
-                    "content": "Hello!",
-                },
-            ]
-        }
-        Please note that the `system message` MUST be placed first in the list of messages!
-        """
-        client = OpenAILike(
-            api_key=api_key,
-            base_url=base_url,
-            model=model_id,
-            is_chat_model=True,
-            is_function_calling_model=True,
-            context_window=128000
-        )
 
         workflow = get_workflow_closure(model_id=model_id, base_url=base_url)
 
@@ -226,35 +185,7 @@ def deployable_ai_service(context, base_url=None, model_id=None):
         return await agent.run(input=messages)
 
     async def generate_async_stream(context) -> AsyncGenerator:
-        """
-        The `generate_stream` function handles the REST call to the Server-Sent Events (SSE) inference endpoint
-        POST /ml/v4/deployments/{id_or_name}/ai_service_stream
 
-        The generate function should return a dict
-
-        A JSON body sent to the above endpoint should follow the format:
-        {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that uses tools to answer questions in detail.",
-                },
-                {
-                    "role": "user",
-                    "content": "Hello!",
-                },
-            ]
-        }
-        Please note that the `system message` MUST be placed first in the list of messages!
-        """
-        client = OpenAILike(
-            api_key=api_key,
-            base_url=base_url,
-            model=model_id,
-            is_chat_model=True,
-            is_function_calling_model=True,
-            context_window=128000
-        )
         workflow = get_workflow_closure(model_id=model_id, base_url=base_url)
 
         payload = context.get_json()
@@ -308,9 +239,6 @@ def deployable_ai_service(context, base_url=None, model_id=None):
         await handler
 
     def generate(context) -> dict:
-        """
-        A synchronous wrapper for the asynchronous `generate_async` method.
-        """
 
         future = asyncio.run_coroutine_threadsafe(
             generate_async(context), persistent_loop
@@ -325,10 +253,6 @@ def deployable_ai_service(context, base_url=None, model_id=None):
         }
 
     def generate_stream(context) -> Generator:
-        """
-        A synchronous wrapper for the asynchronous `generate_async_stream` method.
-        """
-
         gen = generate_async_stream(context)
 
         while True:

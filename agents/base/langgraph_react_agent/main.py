@@ -1,27 +1,27 @@
-import os
 import json
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from dotenv import load_dotenv
-from openai import OpenAI
 from langchain_core.messages import HumanMessage, AIMessage
-
+from pydantic import BaseModel
 
 from langgraph_react_agent_base.agent import get_graph_closure
 
-# Load environment variables
-load_dotenv()
+from utils import get_env_var
 
 
 # Request/Response models
 class ChatRequest(BaseModel):
+    """Incoming chat request body for the /chat endpoint."""
+
     message: str
 
 
 class ChatResponse(BaseModel):
+    """Structured chat response (answer and optional steps)."""
+
     answer: str
     steps: list[str]
 
@@ -32,12 +32,16 @@ agent_graph = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize agent on startup"""
+    """Initialize the ReAct agent graph on startup and clear it on shutdown.
+
+    Reads BASE_URL and MODEL_ID from the environment, builds the graph via
+    get_graph_closure, and sets the global agent_graph for the /chat endpoint.
+    """
     global agent_graph
 
     # Get environment variables
-    base_url = os.getenv("BASE_URL", "").strip()
-    model_id = os.getenv("MODEL_ID", "")
+    base_url = get_env_var("BASE_URL")
+    model_id = get_env_var("MODEL_ID")
 
     # Ensure base_url ends with /v1 if provided
     if base_url and not base_url.endswith("/v1"):
@@ -77,7 +81,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     async def generate_stream():
-        """Generator function that yields SSE formatted chunks"""
+        """Async generator that yields SSE-style chunks (JSON per line) with choices/delta or error."""
         try:
             # Convert user message to HumanMessage
             messages = [HumanMessage(content=request.message)]
@@ -136,7 +140,7 @@ async def chat(request: ChatRequest):
 
 @app.get("/health")
 async def health():
-    """Health check endpoint"""
+    """Return service health and whether the agent graph has been initialized."""
     return {"status": "healthy", "agent_initialized": agent_graph is not None}
 
 

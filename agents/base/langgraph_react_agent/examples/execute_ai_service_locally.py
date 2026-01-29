@@ -1,32 +1,26 @@
 from _interactive_chat import InteractiveChat
-from agents.base.langgraph_react_agent.examples.ai_service import deployable_ai_service
+from agents.base.langgraph_react_agent.examples.ai_service import ai_stream_service
 from utils import get_env_var
 
 
 class SimpleContext:
-    """Simple context object for local execution"""
+    """Simple context object for local execution that holds request payload and headers."""
 
     def __init__(self, payload=None):
+        """Store the initial request payload (or an empty dict)."""
         self.request_payload_json = payload or {}
 
     def get_json(self):
+        """Return the current request payload as a dict (e.g. messages for the agent)."""
         return self.request_payload_json
 
     def get_headers(self):
+        """Return request headers; empty dict for local execution."""
         return {}
 
 
-api_key = get_env_var("API_KEY")
-if not api_key:
-    raise ValueError("API_KEY is required. Please set it in environment variables or .env file")
-
 base_url = get_env_var("BASE_URL")
-if not base_url:
-    raise ValueError("BASE_URL is required. Please set it in environment variables or .env file")
-
 model_id = get_env_var("MODEL_ID")
-if not model_id:
-    raise ValueError("MODEL_ID is required. Please set it in environment variables or .env file")
 
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
@@ -34,15 +28,15 @@ if base_url and not base_url.endswith('/v1'):
 
 stream = True
 context = SimpleContext()
-ai_service_resp_func = deployable_ai_service(
+ai_service_resp_func = ai_stream_service(
     context=context,
-    api_key=api_key,
     base_url=base_url,
     model_id=model_id
 )[stream]
 
 
 def ai_service_invoke(payload):
+    """Run the AI service for one turn: set context from payload and return (stream or full) response."""
     context.request_payload_json = payload
     return ai_service_resp_func(context)
 
