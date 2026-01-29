@@ -2,7 +2,7 @@ from typing import Callable
 
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai_like import OpenAILike
-from ..llama_index_workflow_agent_base.tools import dummy_web_search
+from .tools import dummy_web_search
 from .workflow import FunctionCallingAgent
 from utils import get_env_var
 
