@@ -56,9 +56,14 @@ pip install -r agents/base/llamaindex_websearch_agent/requirements.txt
 ```bash
 pip install llama-stack llama-stack-client
 ```
+
+If you want to install ollama you need to install app from [Ollama site](https://ollama.coma/)
+or via
+[Brew](https://brew.sh/)
 ```bash
 pip install ollama
 ```
+**Now you need to start Ollama app**
 ```bash
 ollama pull llama3.2:3b
 ```
