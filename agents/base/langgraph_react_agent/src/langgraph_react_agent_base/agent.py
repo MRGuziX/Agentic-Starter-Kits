@@ -3,14 +3,14 @@ from typing import Any
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
-from utils import get_env_var
-from ..langgraph_react_agent_base.tools import dummy_web_search, dummy_math
+from langgraph_react_agent_base.tools import dummy_web_search, dummy_math
+from langgraph_react_agent_base.utils import get_env_var
 
 
 def get_graph_closure(
-        model_id: str = None,
-        base_url: str = None,
-        api_key: str = None,
+    model_id: str = None,
+    base_url: str = None,
+    api_key: str = None,
 ) -> Any:
     """Build and return a LangGraph ReAct agent with the configured LLM and tools.
 
@@ -48,8 +48,9 @@ def get_graph_closure(
         base_url=base_url,
     )
 
-    system_prompt = "You are a helpful assistant. When using tools, provide only the required string or number for the arguments, never the schema description."
-
+    system_prompt = """You are a helpful assistant. When you receive a result from a tool, 
+        use that information to provide a FINAL answer to the user immediately. 
+        Do NOT call tools repeatedly for the same question."""
     agent = create_agent(model=chat, tools=tools, system_prompt=system_prompt)
 
     return agent
