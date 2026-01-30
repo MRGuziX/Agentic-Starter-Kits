@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from pydantic import BaseModel
 
-from src.langgraph_react_agent_base.agent import get_graph_closure
-from utils import get_env_var
+from langgraph_react_agent_base.agent import get_graph_closure
+from langgraph_react_agent_base.utils import get_env_var
 
 
 # Request/Response models
@@ -80,42 +80,89 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     async def generate_stream():
-        """Async generator that yields SSE-style chunks (JSON per line) with choices/delta or error."""
+        """Async generator that yields SSE-style chunks with full conversation history including tool calls."""
         try:
-            # Convert user message to HumanMessage
             messages = [HumanMessage(content=request.message)]
 
             # Use invoke to get the agent's response
-            result = await agent_graph.ainvoke({"messages": messages})
+            result = await agent_graph.ainvoke(
+                {"messages": messages}, config={"recursion_limit": 10}
+            )
 
-            # Extract the last message (agent's response)
             if "messages" in result and len(result["messages"]) > 0:
-                # Find the last AIMessage
-                for message in reversed(result["messages"]):
-                    if isinstance(message, AIMessage):
-                        content = message.content
-                        if content:
-                            # Send the message content as a stream chunk
-                            chunk_data = {
-                                "choices": [
-                                    {
-                                        "index": 0,
-                                        "delta": {
-                                            "role": "assistant",
-                                            "content": content,
-                                        },
-                                        "finish_reason": None,
-                                    }
-                                ]
-                            }
-                            yield f"{json.dumps(chunk_data)}\n\n"
+                # Iterate through ALL messages in order (full history)
+                for message in result["messages"]:
+                    # 1. User message (HumanMessage)
+                    if isinstance(message, HumanMessage):
+                        chunk_data = {
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {
+                                        "role": "user",
+                                        "content": message.content,
+                                    },
+                                    "finish_reason": None,
+                                }
+                            ]
+                        }
+                        yield f"{json.dumps(chunk_data)}\n\n"
 
-            # Send final cfhunk with finish_reason
+                    # 2. AI message (AIMessage) - may contain tool_calls
+                    elif isinstance(message, AIMessage):
+                        delta = {
+                            "role": "assistant",
+                            "content": message.content or "",
+                        }
+
+                        # Include tool_calls if present
+                        if message.tool_calls:
+                            delta["tool_calls"] = [
+                                {
+                                    "id": tc["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc["name"],
+                                        "arguments": json.dumps(tc["args"]),
+                                    },
+                                }
+                                for tc in message.tool_calls
+                            ]
+
+                        chunk_data = {
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": delta,
+                                    "finish_reason": None,
+                                }
+                            ]
+                        }
+                        yield f"{json.dumps(chunk_data)}\n\n"
+
+                    # 3. Tool response (ToolMessage)
+                    elif isinstance(message, ToolMessage):
+                        chunk_data = {
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {
+                                        "role": "tool",
+                                        "tool_call_id": message.tool_call_id,
+                                        "name": message.name,
+                                        "content": message.content,
+                                    },
+                                    "finish_reason": None,
+                                }
+                            ]
+                        }
+                        yield f"{json.dumps(chunk_data)}\n\n"
+
+            # Final chunk
             final_chunk = {
                 "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]
             }
             yield f"{json.dumps(final_chunk)}\n\n"
-            yield "[DONE]\n\n"
 
         except Exception as e:
             error_data = {

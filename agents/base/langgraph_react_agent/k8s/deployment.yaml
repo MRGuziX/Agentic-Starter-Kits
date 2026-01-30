@@ -1,18 +1,12 @@
 # Deployment for LangGraph React Agent
 #
-# Before deploying, you need to create:
-#
+# Deploy using environment variables:
 # 1. Secret for API_KEY (required):
 #    oc create secret generic langgraph-react-agent-secrets \
 #      --from-literal=api-key='YOUR_API_KEY_HERE'
 #
-# 2. ConfigMap for BASE_URL and MODEL_ID (optional):
-#    oc create configmap langgraph-react-agent-config \
-#      --from-literal=base-url='https://your-endpoint.com/v1' \
-#      --from-literal=model-id='redhataillama-31-8b-instruct'
-#
-# 3. Update the image on line 35: image: "Quay image"
-#
+#   export BASE_URL="https://your-endpoint.com/v1"
+#   export MODEL_ID="llama-31-8b-instruct"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,8 +25,7 @@ spec:
     spec:
       containers:
       - name: langgraph-react-agent
-        # TODO: Replace with your actual image
-        image: "Quay image"
+        image: "${CONTAINER_IMAGE}"
         ports:
         - containerPort: 8080
           name: http
@@ -45,20 +38,10 @@ spec:
             secretKeyRef:
               name: langgraph-react-agent-secrets
               key: api-key
-        # BASE_URL from ConfigMap (optional)
         - name: BASE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: langgraph-react-agent-config
-              key: base-url
-              optional: true
-        # MODEL_ID from ConfigMap (optional, has default in code)
+          value: "${BASE_URL}"
         - name: MODEL_ID
-          valueFrom:
-            configMapKeyRef:
-              name: langgraph-react-agent-config
-              key: model-id
-              optional: true
+          value: "${MODEL_ID}"
         resources:
           requests:
             memory: "256Mi"
@@ -70,12 +53,16 @@ spec:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 10
+          periodSeconds: 120
+          timeoutSeconds: 5
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
 
