@@ -4,10 +4,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, AIMessage
 from pydantic import BaseModel
 
-from src.langgraph_react_agent_base.agent import get_graph_closure
+from src.llama_index_workflow_agent_base.agent import get_workflow_closure
 from utils import get_env_var
 
 
@@ -25,18 +24,18 @@ class ChatResponse(BaseModel):
     steps: list[str]
 
 
-# Global variable for agent graph
-agent_graph = None
+# Global variable for workflow closure (get_agent callable)
+get_agent = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the ReAct agent graph on startup and clear it on shutdown.
+    """Initialize the LlamaIndex workflow closure on startup and clear it on shutdown.
 
-    Reads BASE_URL and MODEL_ID from the environment, builds the graph via
-    get_graph_closure, and sets the global agent_graph for the /chat endpoint.
+    Reads BASE_URL and MODEL_ID from the environment, builds the workflow via
+    get_workflow_closure, and sets the global get_agent for the /chat endpoint.
     """
-    global agent_graph
+    global get_agent
 
     # Get environment variables
     base_url = get_env_var("BASE_URL")
@@ -46,21 +45,30 @@ async def lifespan(app: FastAPI):
     if base_url and not base_url.endswith("/v1"):
         base_url = base_url.rstrip("/") + "/v1"
 
-    # Get graph closure and create agent graph
-    agent_graph = get_graph_closure(model_id=model_id, base_url=base_url)
+    # Get workflow closure (returns a callable that returns an agent)
+    get_agent = get_workflow_closure(model_id=model_id, base_url=base_url)
 
     yield
 
     # Cleanup on shutdown (if needed)
-    agent_graph = None
+    get_agent = None
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="LangGraph React Agent API",
-    description="FastAPI service for LangGraph React Agent",
+    title="LlamaIndex Websearch Agent API",
+    description="FastAPI service for LlamaIndex Websearch Agent",
     lifespan=lifespan,
 )
+
+
+def _get_assistant_content(last_message) -> str:
+    """Extract text content from the last (assistant) ChatMessage."""
+    if hasattr(last_message, "blocks") and last_message.blocks:
+        return last_message.blocks[0].text or ""
+    if hasattr(last_message, "content"):
+        return last_message.content if isinstance(last_message.content, str) else ""
+    return ""
 
 
 @app.post("/chat")
@@ -74,43 +82,41 @@ async def chat(request: ChatRequest):
     Returns:
         StreamingResponse with Server-Sent Events (SSE) containing the agent's response
     """
-    global agent_graph
+    global get_agent
 
-    if agent_graph is None:
+    if get_agent is None:
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     async def generate_stream():
         """Async generator that yields SSE-style chunks (JSON per line) with choices/delta or error."""
         try:
-            # Convert user message to HumanMessage
-            messages = [HumanMessage(content=request.message)]
+            # Create a fresh agent for this request
+            agent = get_agent()
+            messages = [{"role": "user", "content": request.message}]
 
-            # Use invoke to get the agent's response
-            result = await agent_graph.ainvoke({"messages": messages})
+            # Run the workflow
+            result = await agent.run(input=messages)
 
             # Extract the last message (agent's response)
-            if "messages" in result and len(result["messages"]) > 0:
-                # Find the last AIMessage
-                for message in reversed(result["messages"]):
-                    if isinstance(message, AIMessage):
-                        content = message.content
-                        if content:
-                            # Send the message content as a stream chunk
-                            chunk_data = {
-                                "choices": [
-                                    {
-                                        "index": 0,
-                                        "delta": {
-                                            "role": "assistant",
-                                            "content": content,
-                                        },
-                                        "finish_reason": None,
-                                    }
-                                ]
+            if result and "messages" in result and len(result["messages"]) > 0:
+                last_message = result["messages"][-1]
+                content = _get_assistant_content(last_message)
+                if content:
+                    chunk_data = {
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {
+                                    "role": "assistant",
+                                    "content": content,
+                                },
+                                "finish_reason": None,
                             }
-                            yield f"{json.dumps(chunk_data)}\n\n"
+                        ]
+                    }
+                    yield f"{json.dumps(chunk_data)}\n\n"
 
-            # Send final cfhunk with finish_reason
+            # Send final chunk with finish_reason
             final_chunk = {
                 "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]
             }
@@ -139,8 +145,8 @@ async def chat(request: ChatRequest):
 
 @app.get("/health")
 async def health():
-    """Return service health and whether the agent graph has been initialized."""
-    return {"status": "healthy", "agent_initialized": agent_graph is not None}
+    """Return service health and whether the workflow closure has been initialized."""
+    return {"status": "healthy", "agent_initialized": get_agent is not None}
 
 
 if __name__ == "__main__":
