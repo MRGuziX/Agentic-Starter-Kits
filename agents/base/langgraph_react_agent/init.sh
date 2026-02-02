@@ -11,6 +11,8 @@
 #   - Access to container registry (e.g., Quay.io)
 #
 
+set -e
+
 source .env && echo "Environment variables loaded from .env file"
 
 if [ -z "$CONTAINER_IMAGE" ]; then
@@ -31,9 +33,6 @@ if [ -z "$MODEL_ID" ]; then
     echo "MODEL_ID not set, check .env file"
     exit 1
 fi
-
-oc delete secret langgraph-react-agent-secrets --ignore-not-found
-oc create secret generic langgraph-react-agent-secrets --from-literal=api-key="${API_KEY}"
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

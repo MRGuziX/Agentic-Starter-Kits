@@ -144,8 +144,8 @@ chmod +x init.sh deploy.sh
 ```
 
 This will:
-- Copy required utilities
-- Create Kubernetes secrets for your API key
+- Load and validate environment variables from `.env` file
+- Copy shared utilities (`utils.py`) to the agent source directory
 
 ### Step 3: Build image and deploy Agent
 
@@ -154,6 +154,7 @@ This will:
 ```
 
 This will:
+- Create Kubernetes secret for API key
 - Build and push the Docker image
 - Deploy the agent to OpenShift
 - Create Service and Route
@@ -171,7 +172,7 @@ Send a test request:
 ```bash
 curl -X POST https://<YOUR_ROUTE_URL>/chat \
   -H "Content-Type: application/json" \
-  -d '{"query": "What is the best company? Answer with the first correct answer. "}'
+  -d '{"message": "What is the best company? Answer with the first correct answer."}'
 ```
 
 ## Notes
