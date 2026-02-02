@@ -66,122 +66,77 @@ app = FastAPI(
 @app.post("/chat")
 async def chat(request: ChatRequest):
     """
-    Chat endpoint that accepts a message and streams the agent's response.
+    Chat endpoint that accepts a message and returns the agent's response.
 
     Args:
         request: ChatRequest containing the user message
 
     Returns:
-        StreamingResponse with Server-Sent Events (SSE) containing the agent's response
+        JSON response with full conversation history including tool calls
     """
     global agent_graph
 
     if agent_graph is None:
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
-    async def generate_stream():
-        """Async generator that yields SSE-style chunks with full conversation history including tool calls."""
-        try:
-            messages = [HumanMessage(content=request.message)]
+    try:
+        messages = [HumanMessage(content=request.message)]
 
-            # Use invoke to get the agent's response
-            result = await agent_graph.ainvoke(
-                {"messages": messages}, config={"recursion_limit": 10}
-            )
+        # Use invoke to get the agent's response
+        result = await agent_graph.ainvoke(
+            {"messages": messages}, config={"recursion_limit": 10}
+        )
 
-            if "messages" in result and len(result["messages"]) > 0:
-                # Iterate through ALL messages in order (full history)
-                for message in result["messages"]:
-                    # 1. User message (HumanMessage)
-                    if isinstance(message, HumanMessage):
-                        chunk_data = {
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {
-                                        "role": "user",
-                                        "content": message.content,
-                                    },
-                                    "finish_reason": None,
-                                }
-                            ]
-                        }
-                        yield f"{json.dumps(chunk_data)}\n\n"
+        response_messages = []
 
-                    # 2. AI message (AIMessage) - may contain tool_calls
-                    elif isinstance(message, AIMessage):
-                        delta = {
-                            "role": "assistant",
-                            "content": message.content or "",
-                        }
+        if "messages" in result and len(result["messages"]) > 0:
+            for message in result["messages"]:
+                # 1. User message (HumanMessage)
+                if isinstance(message, HumanMessage):
+                    response_messages.append({
+                        "role": "user",
+                        "content": message.content,
+                    })
 
-                        # Include tool_calls if present
-                        if message.tool_calls:
-                            delta["tool_calls"] = [
-                                {
-                                    "id": tc["id"],
-                                    "type": "function",
-                                    "function": {
-                                        "name": tc["name"],
-                                        "arguments": json.dumps(tc["args"]),
-                                    },
-                                }
-                                for tc in message.tool_calls
-                            ]
+                # 2. AI message (AIMessage)
+                elif isinstance(message, AIMessage):
+                    msg_data = {
+                        "role": "assistant",
+                        "content": message.content or "",
+                    }
+                    if message.tool_calls:
+                        msg_data["tool_calls"] = [
+                            {
+                                "id": tc["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": tc["name"],
+                                    "arguments": json.dumps(tc["args"]),
+                                },
+                            }
+                            for tc in message.tool_calls
+                        ]
+                    response_messages.append(msg_data)
 
-                        chunk_data = {
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": delta,
-                                    "finish_reason": None,
-                                }
-                            ]
-                        }
-                        yield f"{json.dumps(chunk_data)}\n\n"
+                # 3. Tool response (ToolMessage)
+                elif isinstance(message, ToolMessage):
+                    response_messages.append({
+                        "role": "tool",
+                        "tool_call_id": message.tool_call_id,
+                        "name": message.name,
+                        "content": message.content,
+                    })
 
-                    # 3. Tool response (ToolMessage)
-                    elif isinstance(message, ToolMessage):
-                        chunk_data = {
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {
-                                        "role": "tool",
-                                        "tool_call_id": message.tool_call_id,
-                                        "name": message.name,
-                                        "content": message.content,
-                                    },
-                                    "finish_reason": None,
-                                }
-                            ]
-                        }
-                        yield f"{json.dumps(chunk_data)}\n\n"
+        return {
+            "messages": response_messages,
+            "finish_reason": "stop"
+        }
 
-            # Final chunk
-            final_chunk = {
-                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]
-            }
-            yield f"{json.dumps(final_chunk)}\n\n"
-
-        except Exception as e:
-            error_data = {
-                "error": {
-                    "message": f"Error processing request: {str(e)}",
-                    "type": type(e).__name__,
-                }
-            }
-            yield f"{json.dumps(error_data)}\n\n"
-
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing request: {str(e)}"
+        )
 
 
 @app.get("/health")

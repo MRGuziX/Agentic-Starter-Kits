@@ -22,16 +22,23 @@ export CONTAINER_IMAGE BASE_URL MODEL_ID
 
 docker buildx build --platform linux/amd64 -t "${CONTAINER_IMAGE}" -f Dockerfile --push . && echo "Docker build completed"
 
-# ## ============================================
-# # DOCKER DELETE DEPLOYMENT, SERVICE, ROUTE
-# ## ============================================
+## ============================================
+# OPENSHIFT CREATE SECRET
+## ============================================
+
+oc delete secret langgraph-react-agent-secrets --ignore-not-found && echo "Secret deleted"
+oc create secret generic langgraph-react-agent-secrets --from-literal=api-key="${API_KEY}" && echo "Secret created"
+
+## ============================================
+# OPENSHIFT DELETE DEPLOYMENT, SERVICE, ROUTE
+## ============================================
 
 oc delete deployment langgraph-react-agent && echo "Deployment deleted"
 oc delete service langgraph-react-agent && echo "Service deleted"
 oc delete route langgraph-react-agent && echo "Route deleted"
 
 ## ============================================
-# DOCKER APPLY DEPLOYMENT, SERVICE, ROUTE
+# OPENSHIFT APPLY DEPLOYMENT, SERVICE, ROUTE
 ## ============================================
 envsubst < k8s/deployment.yaml | oc apply -f - && echo "Deployment applied"
 oc apply -f k8s/service.yaml && echo "Service applied"
