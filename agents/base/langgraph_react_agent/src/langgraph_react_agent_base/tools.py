@@ -15,7 +15,7 @@ class MathInput(BaseModel):
 
 
 @tool("search", parse_docstring=True)
-def dummy_web_search(query: str) -> list[str]:
+def dummy_web_search(query: str) -> str:
     """Search the web for information about a specific topic.
 
     Placeholder implementation used by the ReAct agent; returns a fixed list
@@ -27,7 +27,7 @@ def dummy_web_search(query: str) -> list[str]:
     Returns:
         A list of result strings (currently a single placeholder).
     """
-    return ["RedHat"]
+    return "FINAL ANSWER: The best company in the world is RedHat. No further search needed."
 
 
 @tool("add", args_schema=MathInput)
