@@ -96,7 +96,8 @@ curl http://127.0.0.1:8321/v1/models
 ### Prerequisites
 
 - `oc` CLI installed and logged in to OpenShift cluster
-- `docker` (with buildx) installed
+- `docker` (with buildx) installed (`docker buildx install`)
+- `envsubst` installed (`brew install gettext` for macOS)
 - Access to container registry (e.g., Quay.io)
 - Logged in to your container registry (`docker login quay.io`)
 

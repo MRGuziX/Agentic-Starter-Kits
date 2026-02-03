@@ -33,9 +33,7 @@ oc create secret generic langgraph-react-agent-secrets --from-literal=api-key="$
 # OPENSHIFT DELETE DEPLOYMENT, SERVICE, ROUTE
 ## ============================================
 
-oc delete deployment langgraph-react-agent && echo "Deployment deleted"
-oc delete service langgraph-react-agent && echo "Service deleted"
-oc delete route langgraph-react-agent && echo "Route deleted"
+oc delete deployment,service,route -l app=langgraph-react-agent --ignore-not-found && echo "Previous resources cleaned up"
 
 ## ============================================
 # OPENSHIFT APPLY DEPLOYMENT, SERVICE, ROUTE
