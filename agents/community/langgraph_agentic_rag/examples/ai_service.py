@@ -1,14 +1,11 @@
 from typing import Generator
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, BaseMessage, ToolMessage
-from .langgraph_agentic_rag.agent import get_graph_closure
-
+from agents.community.langgraph_agentic_rag.src.langgraph_agentic_rag.agent import get_graph_closure
 
 def ai_stream_service(
         context,
         base_url=None,
         model_id=None,
-        vector_store_path=None,
-        embedding_model=None,
 ):
     """Create a deployable AI service that runs the RAG agent and returns (generate, generate_stream).
 
@@ -21,9 +18,6 @@ def ai_stream_service(
         context: Object with get_json() used to read the request payload (not used at setup).
         base_url: LLM API base URL; uses BASE_URL env if omitted.
         model_id: LLM model id; uses MODEL_ID env if omitted.
-        vector_store_path: Path to vector store; uses VECTOR_STORE_PATH env if omitted.
-        embedding_model: Embedding model name; uses EMBEDDING_MODEL env if omitted.
-
     Returns:
         Tuple (generate, generate_stream). Each takes context and returns a response
         (dict with body/choices for generate, generator of choice dicts for generate_stream).
@@ -31,8 +25,6 @@ def ai_stream_service(
     agent_closure = get_graph_closure(
         model_id=model_id,
         base_url=base_url,
-        vector_store_path=vector_store_path,
-        embedding_model=embedding_model,
     )
     agent = agent_closure()
 

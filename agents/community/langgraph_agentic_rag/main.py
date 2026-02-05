@@ -40,11 +40,13 @@ async def lifespan(app: FastAPI):
     # Get environment variables
     base_url = get_env_var("BASE_URL")
     model_id = get_env_var("MODEL_ID")
-    api_key = get_env_var("API_KEY", required=False)
+    api_key = get_env_var("API_KEY")
 
     # RAG-specific configuration
-    vector_store_path = get_env_var("VECTOR_STORE_PATH", required=False)
-    embedding_model = get_env_var("EMBEDDING_MODEL", required=False) or "text-embedding-3-small"
+    vector_store_path = get_env_var("VECTOR_STORE_PATH")
+    embedding_model = get_env_var("EMBEDDING_MODEL") or "text-embedding-3-small"
+    use_milvus = get_env_var("USE_MILVUS")
+    use_milvus = use_milvus.lower() == "true" if use_milvus else True
 
     # Ensure base_url ends with /v1 if provided
     if base_url and not base_url.endswith("/v1"):

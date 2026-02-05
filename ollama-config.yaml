@@ -3,6 +3,7 @@ image_name: ollama
 apis:
   - inference
   - safety
+  - embeddings
 providers:
   inference:
     - provider_id: ollama
@@ -18,4 +19,8 @@ metadata:
 models:
   - metadata: { }
     model_id: llama3.2:3b
+    provider_id: ollama
+  - metadata:
+      model_type: embedding
+    model_id: granite-embedding:latest
     provider_id: ollama

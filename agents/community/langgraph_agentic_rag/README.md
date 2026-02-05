@@ -1,14 +1,16 @@
 # LangGraph Agentic RAG
 
-A LangGraph-based Retrieval-Augmented Generation (RAG) agent that uses OpenAI-compatible APIs. This agent can retrieve information from a vector store knowledge base and generate informed responses.
+A LangGraph-based Retrieval-Augmented Generation (RAG) agent that uses OpenAI-compatible APIs with Milvus Lite vector store. This agent can retrieve information from a vector store knowledge base and generate informed responses.
 
 ## Features
 
 - **Agentic RAG Workflow**: The agent autonomously decides when to retrieve information
-- **OpenAI-Compatible**: Works with any OpenAI-compatible API (OpenAI, local models via vLLM, Ollama, etc.)
-- **Flexible Vector Store**: Uses FAISS for vector storage with automatic sample data generation
+- **OpenAI-Compatible**: Works with any OpenAI-compatible API (OpenAI, local models via vLLM, Ollama, Llama Stack, etc.)
+- **Milvus Lite Vector Store**: High-performance vector database with easy migration to production Milvus
+- **FAISS Fallback**: Optional FAISS support for simple setups
 - **FastAPI Service**: REST API with `/chat` and `/health` endpoints
 - **Tool-based Retrieval**: LangGraph tool integration for seamless retrieval
+- **Document Loader**: Easy document ingestion from text files
 
 ## Architecture
 

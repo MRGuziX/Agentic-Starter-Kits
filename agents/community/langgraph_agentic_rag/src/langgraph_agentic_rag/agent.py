@@ -3,11 +3,10 @@ from typing import Callable, Annotated, Sequence
 from langchain_core.messages import BaseMessage, SystemMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph, START
-from langgraph.graph.graph import CompiledGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-from langgraph_agentic_rag.tools import create_retriever_tool
-from langgraph_agentic_rag.utils import get_env_var
+from .tools import retriever_tool
+from utils import get_env_var
 from typing_extensions import TypedDict
 
 
@@ -15,8 +14,6 @@ def get_graph_closure(
     model_id: str = None,
     base_url: str = None,
     api_key: str = None,
-    vector_store_path: str = None,
-    embedding_model: str = None,
 ) -> Callable:
     """Build and return a LangGraph RAG agent with the configured LLM and retrieval tool.
 
@@ -29,6 +26,7 @@ def get_graph_closure(
         api_key: API key for the LLM. Uses API_KEY env if omitted; required for non-local base_url.
         vector_store_path: Path to the vector store. Uses VECTOR_STORE_PATH env if omitted.
         embedding_model: Embedding model name. Uses EMBEDDING_MODEL env if omitted.
+        use_milvus: Whether to use Milvus Lite (True) or FAISS (False). Defaults to True.
 
     Returns:
         A function that creates a CompiledGraph agent accepting {"messages": [...]} and returns updated state.
@@ -36,15 +34,11 @@ def get_graph_closure(
 
     # Get environment variables if not provided
     if not api_key:
-        api_key = get_env_var("API_KEY", required=False)
+        api_key = get_env_var("API_KEY")
     if not base_url:
         base_url = get_env_var("BASE_URL")
     if not model_id:
         model_id = get_env_var("MODEL_ID")
-    if not vector_store_path:
-        vector_store_path = get_env_var("VECTOR_STORE_PATH", required=False)
-    if not embedding_model:
-        embedding_model = get_env_var("EMBEDDING_MODEL", required=False) or "text-embedding-3-small"
 
     # Check if using local deployment
     is_local = any(host in base_url for host in ["localhost", "127.0.0.1"])
@@ -58,14 +52,6 @@ def get_graph_closure(
         temperature=0.01,
         api_key=api_key or "not-needed",
         base_url=base_url,
-    )
-
-    # Create retriever tool
-    retriever_tool = create_retriever_tool(
-        vector_store_path=vector_store_path,
-        embedding_model=embedding_model,
-        base_url=base_url,
-        api_key=api_key,
     )
 
     TOOLS = [retriever_tool]
@@ -151,7 +137,7 @@ Provide a detailed answer based on the context above. If the context doesn't con
         response = chat.invoke([SystemMessage(content=rag_prompt_text)])
         return {"messages": [AIMessage(content=response.content)]}
 
-    def get_graph(instruction_prompt: SystemMessage | None = None) -> CompiledGraph:
+    def get_graph(instruction_prompt: SystemMessage | None = None):
         """Create and compile the RAG workflow graph.
 
         Args:

@@ -2,7 +2,7 @@
 #
 # Deploy using environment variables:
 # 1. Secret for API_KEY (required):
-#    oc create secret generic langgraph-agentic-rag-secrets \
+#    oc create secret generic langgraph_agentic_rag-secrets \
 #      --from-literal=api-key='YOUR_API_KEY_HERE'
 #
 #   export BASE_URL="https://your-endpoint.com/v1"
@@ -11,21 +11,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: langgraph-agentic-rag
+  name: langgraph_agentic_rag
   labels:
-    app: langgraph-agentic-rag
+    app: langgraph_agentic_rag
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: langgraph-agentic-rag
+      app: langgraph_agentic_rag
   template:
     metadata:
       labels:
-        app: langgraph-agentic-rag
+        app: langgraph_agentic_rag
     spec:
       containers:
-      - name: langgraph-agentic-rag
+      - name: langgraph_agentic_rag
         image: "${CONTAINER_IMAGE}"
         ports:
         - containerPort: 8080
@@ -37,7 +37,7 @@ spec:
         - name: API_KEY
           valueFrom:
             secretKeyRef:
-              name: langgraph-agentic-rag-secrets
+              name: langgraph_agentic_rag-secrets
               key: api-key
         - name: BASE_URL
           value: "${BASE_URL}"

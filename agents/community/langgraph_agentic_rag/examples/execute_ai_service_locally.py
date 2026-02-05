@@ -1,12 +1,6 @@
 from _interactive_chat import InteractiveChat
 from ai_service import ai_stream_service
-import sys
-import os
-
-# Add parent directory to path to import from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from langgraph_agentic_rag.utils import get_env_var
+from utils import get_env_var
 
 
 class SimpleContext:
@@ -28,8 +22,8 @@ class SimpleContext:
 # Load configuration from environment
 base_url = get_env_var("BASE_URL")
 model_id = get_env_var("MODEL_ID")
-vector_store_path = get_env_var("VECTOR_STORE_PATH", required=False)
-embedding_model = get_env_var("EMBEDDING_MODEL", required=False) or "text-embedding-3-small"
+vector_store_path = get_env_var("VECTOR_STORE_PATH")
+embedding_model = get_env_var("EMBEDDING_MODEL") or "text-embedding-3-small"
 
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
@@ -41,8 +35,6 @@ ai_service_resp_func = ai_stream_service(
     context=context,
     base_url=base_url,
     model_id=model_id,
-    vector_store_path=vector_store_path,
-    embedding_model=embedding_model,
 )[stream]
 
 
