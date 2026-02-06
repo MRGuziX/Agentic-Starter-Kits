@@ -3,10 +3,9 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from src.llama_index_workflow_agent_base.agent import get_workflow_closure
+from llama_index_workflow_agent_base.agent import get_workflow_closure
 from utils import get_env_var
 
 
@@ -62,85 +61,112 @@ app = FastAPI(
 )
 
 
-def _get_assistant_content(last_message) -> str:
-    """Extract text content from the last (assistant) ChatMessage."""
-    if hasattr(last_message, "blocks") and last_message.blocks:
-        return last_message.blocks[0].text or ""
-    if hasattr(last_message, "content"):
-        return last_message.content if isinstance(last_message.content, str) else ""
+def _get_message_content(msg) -> str:
+    """Extract text content from a LlamaIndex ChatMessage."""
+    if hasattr(msg, "blocks") and msg.blocks:
+        return (msg.blocks[0].text or "") if msg.blocks else ""
+    if hasattr(msg, "content"):
+        if isinstance(msg.content, str):
+            return msg.content
+        if isinstance(msg.content, list) and msg.content:
+            first = msg.content[0]
+            if isinstance(first, dict) and "text" in first:
+                return first["text"] or ""
     return ""
+
+
+def _message_to_response_dict(msg):
+    """Map a LlamaIndex ChatMessage to the same format as LangGraph (role, content, tool_calls, etc.)."""
+    role = getattr(msg, "role", "user")
+    content = _get_message_content(msg)
+
+    if role == "user":
+        return {"role": "user", "content": content}
+
+    if role == "assistant":
+        msg_data = {"role": "assistant", "content": content or ""}
+        tool_calls = getattr(msg, "tool_calls", None)
+        if not tool_calls and getattr(msg, "additional_kwargs", None):
+            tool_calls = msg.additional_kwargs.get("tool_calls")
+        if tool_calls:
+            if hasattr(tool_calls[0], "tool_id"):  # ToolSelection-like
+                msg_data["tool_calls"] = [
+                    {
+                        "id": tc.tool_id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.tool_name,
+                            "arguments": json.dumps(tc.tool_kwargs),
+                        },
+                    }
+                    for tc in tool_calls
+                ]
+            else:  # dict format (e.g. from additional_kwargs)
+                msg_data["tool_calls"] = []
+                for tc in tool_calls:
+                    fn = tc.get("function", {}) or {}
+                    args = fn.get("arguments", "")
+                    if isinstance(args, dict):
+                        args = json.dumps(args)
+                    msg_data["tool_calls"].append(
+                        {
+                            "id": tc.get("id", ""),
+                            "type": "function",
+                            "function": {"name": fn.get("name", ""), "arguments": args},
+                        }
+                    )
+        return msg_data
+
+    if role == "tool":
+        additional = getattr(msg, "additional_kwargs", {}) or {}
+        return {
+            "role": "tool",
+            "tool_call_id": additional.get("tool_call_id", ""),
+            "name": additional.get("name", ""),
+            "content": content,
+        }
+
+    return None  # skip system or unknown
 
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
     """
-    Chat endpoint that accepts a message and streams the agent's response.
+    Chat endpoint that accepts a message and returns the agent's response.
 
     Args:
         request: ChatRequest containing the user message
 
     Returns:
-        StreamingResponse with Server-Sent Events (SSE) containing the agent's response
+        JSON response with full conversation history including tool calls
     """
     global get_agent
 
     if get_agent is None:
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
-    async def generate_stream():
-        """Async generator that yields SSE-style chunks (JSON per line) with choices/delta or error."""
-        try:
-            # Create a fresh agent for this request
-            agent = get_agent()
-            messages = [{"role": "user", "content": request.message}]
+    try:
+        agent = get_agent()
+        messages = [{"role": "user", "content": request.message}]
 
-            # Run the workflow
-            result = await agent.run(input=messages)
+        result = await agent.run(input=messages)
 
-            # Extract the last message (agent's response)
-            if result and "messages" in result and len(result["messages"]) > 0:
-                last_message = result["messages"][-1]
-                content = _get_assistant_content(last_message)
-                if content:
-                    chunk_data = {
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {
-                                    "role": "assistant",
-                                    "content": content,
-                                },
-                                "finish_reason": None,
-                            }
-                        ]
-                    }
-                    yield f"{json.dumps(chunk_data)}\n\n"
+        response_messages = []
 
-            # Send final chunk with finish_reason
-            final_chunk = {
-                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]
-            }
-            yield f"{json.dumps(final_chunk)}\n\n"
-            yield "[DONE]\n\n"
+        if result and "messages" in result and len(result["messages"]) > 0:
+            for message in result["messages"]:
+                if getattr(message, "role", None) == "system":
+                    continue
+                item = _message_to_response_dict(message)
+                if item is not None:
+                    response_messages.append(item)
 
-        except Exception as e:
-            error_data = {
-                "error": {
-                    "message": f"Error processing request: {str(e)}",
-                    "type": type(e).__name__,
-                }
-            }
-            yield f"{json.dumps(error_data)}\n\n"
+        return {"messages": response_messages, "finish_reason": "stop"}
 
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error processing request: {str(e)}"
+        )
 
 
 @app.get("/health")

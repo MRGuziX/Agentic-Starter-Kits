@@ -3,15 +3,15 @@ from typing import Callable
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai_like import OpenAILike
 
-from utils import get_env_var
-from .tools import dummy_web_search
-from .workflow import FunctionCallingAgent
+from llama_index_workflow_agent_base.utils import get_env_var
+from llama_index_workflow_agent_base.tools import dummy_web_search
+from llama_index_workflow_agent_base.workflow import FunctionCallingAgent
 
 
 def get_workflow_closure(
-        model_id: str = None,
-        base_url: str = None,
-        api_key: str = None,
+    model_id: str = None,
+    base_url: str = None,
+    api_key: str = None,
 ) -> Callable:
     """Workflow generator closure."""
 
