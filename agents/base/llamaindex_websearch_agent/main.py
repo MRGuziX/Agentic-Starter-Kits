@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from llama_index_workflow_agent_base.agent import get_workflow_closure
-from utils import get_env_var
+from llama_index_workflow_agent_base.utils import get_env_var
 
 
 # Request/Response models
