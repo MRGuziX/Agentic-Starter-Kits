@@ -1,5 +1,5 @@
-from typing import Optional
 import os
+from typing import Optional
 
 from langchain_core.tools import tool
 from langchain_milvus import Milvus
@@ -40,8 +40,6 @@ def create_retriever_tool(
     # Get configuration from environment if not provided
     if not api_key:
         api_key = get_env_var("API_KEY")
-    if not base_url:
-        base_url = get_env_var("BASE_URL")
     if not vector_store_path:
         vector_store_path = get_env_var("VECTOR_STORE_PATH")
     if not embedding_model:

@@ -7,13 +7,39 @@ creates embeddings, and stores them in a Milvus Lite vector database.
 
 import os
 
-from langchain_community.document_loaders import TextLoader, DirectoryLoader
-from langchain_milvus import Milvus
+from langchain_community.document_loaders import TextLoader
+
+
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from utils import get_env_var
 
+# http://localhost:8321 -> ulr do llama server
+# http://localhost:11434 -> url do ollamy
+
+base_url = get_env_var("BASE_URL")
+from llama_stack_client import LlamaStackClient
+
+client = LlamaStackClient(
+    base_url=base_url,
+)
+
+provider_id = "milvus"
+embedding_model = get_env_var("EMBEDDING_MODEL")
+embedding_dimension = 768
+
+
+client.vector_stores.create(
+    extra_body={
+        "provider_id": provider_id,
+        # "provider_vector_store_id": collection_name,  # --> not working in 0.4.x
+        "embedding_model": embedding_model,
+        "embedding_dimension": embedding_dimension,
+    }
+)
+
+print("Vector store registered successfully.")
 
 def load_and_index_documents(
     docs_to_load: str = None,
@@ -50,7 +76,7 @@ def load_and_index_documents(
             vector_store_path = os.path.join(data_folder, vector_store_path.lstrip("./"))
 
     if not embedding_model:
-        embedding_model = get_env_var("EMBEDDING_MODEL") or "text-embedding-3-small"
+        embedding_model = get_env_var("EMBEDDING_MODEL")
 
     if not base_url:
         base_url = get_env_var("BASE_URL")
@@ -83,7 +109,7 @@ def load_and_index_documents(
     )
     all_chunks = text_splitter.split_documents(documents)
     chunks = [
-        doc for doc in all_chunks
+        doc.page_content for doc in all_chunks
         if doc.page_content and doc.page_content.strip()
     ]
     print(f"Created {len(chunks)} chunks")
@@ -117,13 +143,7 @@ def load_and_index_documents(
         "uri": vector_store_path  # Milvus Lite uses file path as URI
     }
 
-    vector_store = Milvus(
-        embedding_function=embeddings,
-        connection_args=connection_args,
-        collection_name="rag_knowledge_base",
-        drop_old=True,  # Ensures a fresh start
-        auto_id=True  # Milvus Lite will handle primary key generation
-    )
+
 
     print("Vector store initialized. Connection established.")
 
