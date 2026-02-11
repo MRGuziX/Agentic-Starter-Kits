@@ -6,40 +6,18 @@ creates embeddings, and stores them in a Milvus Lite vector database.
 """
 
 import os
+import uuid
 
 from langchain_community.document_loaders import TextLoader
 
+from llama_stack_client import LlamaStackClient
 
 from langchain_openai import OpenAIEmbeddings
+
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from utils import get_env_var
-
-# http://localhost:8321 -> ulr do llama server
-# http://localhost:11434 -> url do ollamy
-
-base_url = get_env_var("BASE_URL")
-from llama_stack_client import LlamaStackClient
-
-client = LlamaStackClient(
-    base_url=base_url,
-)
-
-provider_id = "milvus"
-embedding_model = get_env_var("EMBEDDING_MODEL")
-embedding_dimension = 768
-
-
-client.vector_stores.create(
-    extra_body={
-        "provider_id": provider_id,
-        # "provider_vector_store_id": collection_name,  # --> not working in 0.4.x
-        "embedding_model": embedding_model,
-        "embedding_dimension": embedding_dimension,
-    }
-)
-
-print("Vector store registered successfully.")
 
 def load_and_index_documents(
     docs_to_load: str = None,
@@ -47,8 +25,8 @@ def load_and_index_documents(
     embedding_model: str = None,
     base_url: str = None,
     api_key: str = None,
-    chunk_size: int = 1000,
-    chunk_overlap: int = 200,
+    chunk_size: int = 64,
+    chunk_overlap: int = 32,
 ):
     """
     Load documents from directory and index them in Milvus Lite.
@@ -62,6 +40,43 @@ def load_and_index_documents(
         chunk_size: Size of text chunks
         chunk_overlap: Overlap between chunks
     """
+    if not embedding_model:
+        embedding_model = get_env_var("EMBEDDING_MODEL")
+
+    if not base_url:
+        base_url = get_env_var("BASE_URL")
+
+    if not api_key:
+        api_key = get_env_var("API_KEY")
+    if not docs_to_load:
+        docs_to_load = get_env_var("DOCS_TO_LOAD")
+    # http://localhost:8321 -> ulr do llama server
+    # http://localhost:11434 -> url do ollamy
+
+
+    client = LlamaStackClient(
+        base_url=base_url,
+    )
+
+    vector_store_list = client.vector_stores.list()
+
+    if len(vector_store_list.data) == 1:
+        vector_store = client.vector_stores.retrieve(vector_store_id=vector_store_list.data[0].id)
+        print("Vector store registered successfully.")
+    else:
+        provider_id = "milvus"
+        embedding_dimension = 768
+
+        vector_store = client.vector_stores.create(
+            extra_body={
+                "provider_id": provider_id,
+                # "provider_vector_store_id": collection_name,  # --> not working in 0.4.x
+                "embedding_model": embedding_model,
+                "embedding_dimension": embedding_dimension,
+            }
+        )
+        print("Vector store registered successfully.")
+
     # Default to data folder for Milvus database
     if not vector_store_path:
         vector_store_path = get_env_var("VECTOR_STORE_PATH")
@@ -74,25 +89,6 @@ def load_and_index_documents(
         if not os.path.isabs(vector_store_path):
             data_folder = os.path.dirname(__file__)
             vector_store_path = os.path.join(data_folder, vector_store_path.lstrip("./"))
-
-    if not embedding_model:
-        embedding_model = get_env_var("EMBEDDING_MODEL")
-
-    if not base_url:
-        base_url = get_env_var("BASE_URL")
-
-    if not api_key:
-        api_key = get_env_var("API_KEY")
-    if not docs_to_load:
-        docs_to_load = get_env_var("DOCS_TO_LOAD")
-
-    print(f"\n{'='*80}")
-    print("Loading Documents into Milvus Lite Vector Store")
-    print(f"{'='*80}")
-    print(f"Data Directory: {docs_to_load}")
-    print(f"Vector Store Path: {vector_store_path}")
-    print(f"Embedding Model: {embedding_model}")
-    print(f"{'='*80}\n")
 
     # Load documents
     print("Loading documents from directory...")
@@ -119,60 +115,40 @@ def load_and_index_documents(
     embeddings = OpenAIEmbeddings(
         model=embedding_model,
         api_key=api_key or "not-needed",
-        base_url=base_url,
+        base_url=base_url+"/v1",
+        check_embedding_ctx_length=False #that will prevent fail if embedding model is not registered in OpenAI Registry
     )
 
-    # Create vector store using Milvus Lite
-    print("\nCreating Milvus Lite vector store...")
+    # Create embeddings for all chunks
+    print("Creating embeddings...")
+    embedding_vectors = embeddings.embed_documents(texts=chunks)
 
-    # Ensure the parent directory exists (always in data folder)
-    if vector_store_path.endswith('.db'):
-        # It's a file path, create parent directory
-        parent_dir = os.path.dirname(vector_store_path)
-        if parent_dir and not os.path.exists(parent_dir):
-            os.makedirs(parent_dir, exist_ok=True)
-            print(f"Created directory: {parent_dir}")
-    else:
-        # It's a directory path, create it
-        if not os.path.exists(vector_store_path):
-            os.makedirs(vector_store_path, exist_ok=True)
-            print(f"Created directory: {vector_store_path}")
+    # Create properly formatted chunks for LlamaStack
+    formatted_chunks = []
+    for i, (text, embedding_vec) in enumerate(zip(chunks, embedding_vectors)):
+        chunk = {
+            "chunk_id": str(uuid.uuid4()),  # Unique ID
+            "content": text,  # The actual text content
+            "embedding": embedding_vec,  # The embedding vector
+            "embedding_dimension": 768,  # Dimension for embeddinggemma
+            "embedding_model": "ollama/embeddinggemma:latest",
+            "chunk_metadata": {
+                "document_id": "doc_1",
+                "source": "sample_knowledge.txt",
+            },
+            "metadata": {
+                "chunk_index": i,
+            }
+        }
+        formatted_chunks.append(chunk)
 
-    # Milvus Lite connection URI
-    connection_args = {
-        "uri": vector_store_path  # Milvus Lite uses file path as URI
-    }
 
+    client.vector_io.insert(
+        chunks=formatted_chunks,
+        vector_store_id=vector_store.id,
+    )
 
-
-    print("Vector store initialized. Connection established.")
-
-    # 2. Add the chunked documents
-    ids = vector_store.add_documents(chunks)
-
-    print(f"Successfully added {len(ids)} chunks to the store.")
-
-    print(f"\n{'='*80}")
-    print("✅ Successfully loaded and indexed documents!")
-    print(f"{'='*80}")
-    print(f"Total chunks indexed: {len(chunks)}")
-    print(f"Vector store location: {vector_store_path}")
-    print(f"Collection name: rag_knowledge_base")
-    print(f"{'='*80}\n")
-
-    # Test retrieval
-    print("Testing retrieval...")
-    test_query = "What is LangGraph?"
-    results = vector_store.similarity_search(test_query, k=3)
-
-    print(f"\nQuery: {test_query}")
-    print(f"Retrieved {len(results)} documents:\n")
-    for i, doc in enumerate(results, 1):
-        print(f"Document {i}:")
-        print(f"  Content: {doc.page_content[:200]}...")
-        print(f"  Metadata: {doc.metadata}")
-        print()
-
+    print("\nEmbeddings successfully loaded.")
 
 if __name__ == "__main__":
     load_and_index_documents()
