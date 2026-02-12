@@ -25,8 +25,8 @@ def load_and_index_documents(
     embedding_model: str = None,
     base_url: str = None,
     api_key: str = None,
-    chunk_size: int = 64,
-    chunk_overlap: int = 32,
+    chunk_size: int = 512,  # Increased from 64 to 512 for better context
+    chunk_overlap: int = 128,  # Increased from 32 to 128 for better overlap
 ):
     """
     Load documents from directory and index them in Milvus Lite.
@@ -105,11 +105,14 @@ def load_and_index_documents(
         separators=["\n\n", "\n", ". ", " ", ""],
     )
     all_chunks = text_splitter.split_documents(documents)
-    chunks = [
-        doc.page_content for doc in all_chunks
-        if doc.page_content and doc.page_content.strip()
-    ]
-    print(f"Created {len(chunks)} chunks")
+    # Filter out chunks that are empty, just whitespace, or just separator lines
+    chunks = []
+    for doc in all_chunks:
+        content = doc.page_content.strip()
+        # Skip if empty or if it's just separator characters
+        if content and not all(c in '=-_*#\n\r\t ' for c in content):
+            chunks.append(content)
+    print(f"Created {len(chunks)} chunks (filtered out empty/separator chunks)")
 
     # Create embeddings
     print("\nInitializing embeddings...")

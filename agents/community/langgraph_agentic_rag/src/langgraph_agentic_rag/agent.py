@@ -1,6 +1,6 @@
 from typing import Callable, Annotated, Sequence
 
-from langchain_core.messages import BaseMessage, SystemMessage, AIMessage
+from langchain_core.messages import BaseMessage, SystemMessage, AIMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph, START
 from langgraph.graph.message import add_messages
@@ -49,7 +49,7 @@ def get_graph_closure(
     # Initialize ChatOpenAI
     chat = ChatOpenAI(
         model=model_id,
-        temperature=0.01,
+        temperature=0.3,  # Higher temperature for better rephrasing
         api_key=api_key or "not-needed",
         base_url=base_url,
     )
@@ -58,10 +58,10 @@ def get_graph_closure(
 
     # Define system prompt
     default_system_prompt = (
-        "You are a helpful AI assistant that can retrieve information from a knowledge base. "
-        "When you receive a question, first check if you need to retrieve information using the retriever tool. "
+        "You are a helpful AI assistant that can retrieve information from a knowledge base."
+        "When you receive a question, first check if you need to retrieve information using the retriever tool."
         "If the question requires specific knowledge that you might not have, use the retriever tool to get relevant information. "
-        "Then provide a comprehensive answer based on the retrieved context."
+        "Then provide a meaningfully but short sentenced answer with a use of retrieved data from chunks"
     )
 
     class AgentState(TypedDict):
@@ -103,6 +103,7 @@ def get_graph_closure(
         Returns:
             dict: The updated state with the generated answer
         """
+        print("\n🤖 Generate node called - synthesizing answer...")
         messages = state["messages"]
 
         # Find the last user question (looking backward for HumanMessage)
@@ -123,19 +124,31 @@ def get_graph_closure(
             # Fallback if we can't find the question or docs
             return {"messages": [AIMessage(content="I couldn't find the information needed to answer your question.")]}
 
-        # Create a simple RAG prompt
-        rag_prompt_text = f"""Answer the question based on the following context:
+        # Create a simple, direct prompt for the LLM
+        # Check if docs indicate no relevant information
+        if "No relevant information" in docs or not docs.strip():
+            return {"messages": [AIMessage(content="I couldn't find relevant information in the provided documents to answer your question.")]}
+
+        # Use HumanMessage instead of SystemMessage for better compatibility with smaller models
+        rag_prompt_text = f"""Based on the following context, answer the question.
 
 Context:
 {docs}
 
 Question: {question}
 
-Provide a detailed answer based on the context above. If the context doesn't contain relevant information, say so."""
+Answer[start response with 'based on provided documents]:"""
 
         # Generate response
-        response = chat.invoke([SystemMessage(content=rag_prompt_text)])
-        return {"messages": [AIMessage(content=response.content)]}
+        try:
+            response = chat.invoke([HumanMessage(content=rag_prompt_text)])
+
+            if not response.content or not response.content.strip():
+                return {"messages": [AIMessage(content="I couldn't find relevant information in the provided documents to answer your question.")]}
+
+            return {"messages": [AIMessage(content=response.content.strip())]}
+        except Exception:
+            return {"messages": [AIMessage(content="I couldn't find relevant information in the provided documents to answer your question.")]}
 
     def get_graph(instruction_prompt: SystemMessage | None = None):
         """Create and compile the RAG workflow graph.

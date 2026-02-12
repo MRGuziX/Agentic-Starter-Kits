@@ -1,94 +1,61 @@
-import os
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from langchain_core.tools import tool
-from langchain_openai import OpenAIEmbeddings
 from llama_stack_client import LlamaStackClient
 from pydantic import BaseModel, Field
 
 from utils import get_env_var
 
-# Cache the retriever to avoid re-initializing Milvus on every tool call
-_retriever_cache = None
+# Cache to avoid re-initializing on every tool call
+_client_cache = None
+_vector_store_id_cache = None
 
 
-def create_retriever_tool(
-        vector_store_path: Optional[str] = None,
-        embedding_model: str = "text-embedding-3-small",
+def get_retriever_components(
         base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-):
+) -> Dict[str, Any]:
     """
-    Create a retriever tool that searches Milvus Lite vector store for relevant documents.
+    Get the LlamaStack client and vector store ID for retrieval.
 
     Args:
-        vector_store_path: Path to the Milvus Lite database file
-        embedding_model: Name of the embedding model to use
-        base_url: Base URL for the embeddings API
-        api_key: API key for the embeddings API
-        use_milvus: Whether to use Milvus Lite (always True, kept for compatibility)
+        base_url: Base URL for the LlamaStack API
 
     Returns:
-        A tool function that can retrieve relevant documents
+        Dict containing client and vector_store_id
     """
-    global _retriever_cache
+    global _client_cache, _vector_store_id_cache
 
-    # Return cached retriever if it exists
-    if _retriever_cache is not None:
-        return _retriever_cache
+    # Return cached components if they exist
+    if _client_cache is not None and _vector_store_id_cache is not None:
+        return {
+            "client": _client_cache,
+            "vector_store_id": _vector_store_id_cache
+        }
 
     # Get configuration from environment if not provided
-    if not api_key:
-        api_key = get_env_var("API_KEY")
-    if not vector_store_path:
-        vector_store_path = get_env_var("VECTOR_STORE_PATH")
-    if not embedding_model:
-        embedding_model = get_env_var("EMBEDDING_MODEL") or "text-embedding-3-small"
+    if not base_url:
+        base_url = get_env_var("BASE_URL")
 
-    # Initialize embeddings
-    embeddings = OpenAIEmbeddings(
-        model=embedding_model,
-        api_key=api_key or "not-needed",
-        base_url=base_url,
-    )
-
-    # Connect to Milvus Lite
-    # Default to data folder if not provided
-    if not vector_store_path:
-        # Get path relative to this file's location
-        # tools.py is in: agents/community/langgraph_agentic_rag/src/langgraph_agentic_rag/
-        # data folder is in: agents/community/langgraph_agentic_rag/data/
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Go up to langgraph_agentic_rag root, then to data folder
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-        vector_store_path = os.path.join(project_root, "data", "milvus_data", "milvus_lite.db")
-    elif not os.path.isabs(vector_store_path):
-        # If relative path provided, ensure it's relative to data folder
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-        # If path doesn't start with data/, assume it should be in data folder
-        if not vector_store_path.startswith("data/"):
-            vector_store_path = os.path.join(project_root, "data", vector_store_path.lstrip("./"))
-        else:
-            vector_store_path = os.path.join(project_root, vector_store_path)
-    
-    connection_args = {"uri": vector_store_path}
-
+    # Initialize LlamaStack client
     client = LlamaStackClient(
         base_url=base_url,
     )
-    client.vector_io.query()
 
-    # Create retriever
-    retriever = vector_store.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 3}  # Retrieve top 3 most relevant documents
-    )
+    # Get the vector store ID
+    vector_store_list = client.vector_stores.list()
+    if len(vector_store_list.data) == 0:
+        raise RuntimeError("No vector store found. Please run load_documents.py first to create and populate the vector store.")
 
-    # Cache the retriever
-    _retriever_cache = retriever
+    vector_store_id = vector_store_list.data[0].id
 
-    return retriever
+    # Cache the components
+    _client_cache = client
+    _vector_store_id_cache = vector_store_id
+
+    return {
+        "client": client,
+        "vector_store_id": vector_store_id
+    }
 
 
 class RetrieverInput(BaseModel):
@@ -115,15 +82,45 @@ def retriever_tool(query: str) -> str:
         # Extract the actual query value from the dict
         query = query.get('value', query.get('query', str(query)))
 
-    retriever = create_retriever_tool()
-    docs = retriever.invoke(query)
+    # Get retriever components
+    components = get_retriever_components()
+    client = components["client"]
+    vector_store_id = components["vector_store_id"]
+
+    # Query the vector store using LlamaStack client
+    # The query parameter takes the text string, and the server handles embedding generation
+    response = client.vector_io.query(
+        vector_store_id=vector_store_id,
+        query=query,  # Pass the text query directly
+        params={
+            "top_k": 1  # Retrieve only the most relevant document
+        }
+    )
 
     # Format the retrieved documents
+    if not response.chunks:
+        return "No relevant information was found in the provided documents for this query."
+
     formatted_docs = []
-    for i, doc in enumerate(docs, 1):
-        formatted_docs.append(
-            f"Document {i}:\n{doc.page_content}\n"
-            f"Source: {doc.metadata.get('source', 'unknown')}"
-        )
+    for i, chunk in enumerate(response.chunks, 1):
+        # Skip chunks that are empty or just separators/whitespace
+        content = chunk.content.strip()
+        if not content or all(c in '=-_*#' for c in content):
+            continue
+
+        # Extract source from chunk metadata (Pydantic object)
+        source = getattr(chunk.chunk_metadata, 'source', 'unknown') if hasattr(chunk, 'chunk_metadata') else 'unknown'
+
+        # Format each document with clear separation
+        doc_text = f"--- Document {len(formatted_docs) + 1} ---\n"
+        doc_text += f"Content: {content}\n"
+        doc_text += f"Source: {source}\n"
+        doc_text += f"Score: {getattr(chunk, 'score', 'N/A')}"
+
+        formatted_docs.append(doc_text)
+
+    # If all chunks were filtered out, return no information message
+    if not formatted_docs:
+        return "No relevant information was found in the provided documents for this query."
 
     return "\n\n".join(formatted_docs)
