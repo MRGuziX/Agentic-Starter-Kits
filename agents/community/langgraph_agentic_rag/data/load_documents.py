@@ -68,6 +68,7 @@ def load_and_index_documents(
         embedding_dimension = 768
 
         vector_store = client.vector_stores.create(
+            name="my_vector_store",
             extra_body={
                 "provider_id": provider_id,
                 # "provider_vector_store_id": collection_name,  # --> not working in 0.4.x
@@ -131,7 +132,7 @@ def load_and_index_documents(
             "content": text,  # The actual text content
             "embedding": embedding_vec,  # The embedding vector
             "embedding_dimension": 768,  # Dimension for embeddinggemma
-            "embedding_model": "ollama/embeddinggemma:latest",
+            "embedding_model": embedding_model,
             "chunk_metadata": {
                 "document_id": "doc_1",
                 "source": "sample_knowledge.txt",

@@ -2,8 +2,8 @@ import os
 from typing import Optional
 
 from langchain_core.tools import tool
-from langchain_milvus import Milvus
 from langchain_openai import OpenAIEmbeddings
+from llama_stack_client import LlamaStackClient
 from pydantic import BaseModel, Field
 
 from utils import get_env_var
@@ -74,14 +74,13 @@ def create_retriever_tool(
     
     connection_args = {"uri": vector_store_path}
 
-    vectorstore = Milvus(
-        embedding_function=embeddings,
-        connection_args=connection_args,
-        collection_name="rag_knowledge_base",
+    client = LlamaStackClient(
+        base_url=base_url,
     )
+    client.vector_io.query()
 
     # Create retriever
-    retriever = vectorstore.as_retriever(
+    retriever = vector_store.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 3}  # Retrieve top 3 most relevant documents
     )
