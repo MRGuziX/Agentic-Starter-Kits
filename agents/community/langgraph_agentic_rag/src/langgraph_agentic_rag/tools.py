@@ -93,9 +93,10 @@ def retriever_tool(query: str) -> str:
         vector_store_id=vector_store_id,
         query=query,  # Pass the text query directly
         params={
-            "top_k": 1  # Retrieve only the most relevant document
+            "max_chunks": 1  # Retrieve only the most relevant document (max_chunks not top_k or K)
         }
     )
+
 
     # Format the retrieved documents
     if not response.chunks:

@@ -23,7 +23,7 @@ class SimpleContext:
 base_url = get_env_var("BASE_URL")
 model_id = get_env_var("MODEL_ID")
 vector_store_path = get_env_var("VECTOR_STORE_PATH")
-embedding_model = get_env_var("EMBEDDING_MODEL") or "text-embedding-3-small"
+embedding_model = get_env_var("EMBEDDING_MODEL")
 
 # Ensure base_url ends with /v1 if provided
 if base_url and not base_url.endswith('/v1'):
