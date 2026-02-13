@@ -68,7 +68,6 @@ Vector Databases
 Vector databases are specialized databases optimized for storing and searching high-dimensional vectors (embeddings). They enable efficient similarity search, which is crucial for RAG applications.
 
 Popular Vector Databases:
-- FAISS: Facebook AI Similarity Search, efficient CPU/GPU-based search
 - Milvus: Open-source vector database with horizontal scaling
 - Pinecone: Managed vector database service
 - Weaviate: Open-source vector search engine

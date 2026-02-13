@@ -24,9 +24,6 @@ def get_graph_closure(
         model_id: LLM model identifier (e.g. for OpenAI-compatible API). Uses MODEL_ID env if omitted.
         base_url: Base URL for the LLM API. Uses BASE_URL env if omitted.
         api_key: API key for the LLM. Uses API_KEY env if omitted; required for non-local base_url.
-        vector_store_path: Path to the vector store. Uses VECTOR_STORE_PATH env if omitted.
-        embedding_model: Embedding model name. Uses EMBEDDING_MODEL env if omitted.
-        use_milvus: Whether to use Milvus Lite (True) or FAISS (False). Defaults to True.
 
     Returns:
         A function that creates a CompiledGraph agent accepting {"messages": [...]} and returns updated state.

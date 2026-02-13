@@ -1,16 +1,22 @@
 # LangGraph Agentic RAG
 
-A LangGraph-based Retrieval-Augmented Generation (RAG) agent that uses OpenAI-compatible APIs with Milvus Lite vector store. This agent can retrieve information from a vector store knowledge base and generate informed responses.
+A production-ready Retrieval-Augmented Generation (RAG) agent built with LangGraph that intelligently retrieves information from a Milvus Lite vector store and generates context-aware responses using Llama Stack and Ollama.
+
+## Quick Links
+
+- 🚀 **[Quick Start](#quick-start)** - Get running in 8 steps
+- 📖 **[Detailed Guide](./QUICKSTART.md)** - Comprehensive setup with troubleshooting
+- 🔧 **[Configuration](#configuration-reference)** - Environment variables and settings
+- 🎯 **[API Endpoints](#api-endpoints)** - REST API documentation
 
 ## Features
 
 - **Agentic RAG Workflow**: The agent autonomously decides when to retrieve information
-- **OpenAI-Compatible**: Works with any OpenAI-compatible API (OpenAI, local models via vLLM, Ollama, Llama Stack, etc.)
+- **Llama Stack Integration**: Unified model serving with Ollama for local LLM inference
 - **Milvus Lite Vector Store**: High-performance vector database with easy migration to production Milvus
-- **FAISS Fallback**: Optional FAISS support for simple setups
 - **FastAPI Service**: REST API with `/chat` and `/health` endpoints
 - **Tool-based Retrieval**: LangGraph tool integration for seamless retrieval
-- **Document Loader**: Easy document ingestion from text files
+- **Document Loader**: Easy document ingestion from text files with customizable chunking
 
 ## Architecture
 
@@ -26,58 +32,186 @@ START → Agent → [Decision] → Retrieve → Generate → END
                    END (if no retrieval needed)
 ```
 
-## Installation
+## Quick Start
 
-### Using pip
+### Prerequisites
+
+- Python 3.10 or higher
+- Ollama installed and running
+- Llama Stack CLI installed
+
+### Installation
+
+**Install Ollama** (if not already installed):
 
 ```bash
+# macOS/Linux
+#visit ollama website
+
+# Or via Homebrew on macOS
+brew install ollama
+```
+
+**Install Llama Stack**:
+
+```bash
+pip install llama-stack llama-stack-client
+```
+
+### Setup Instructions
+
+**Step 1: Pull Required Models**
+
+```bash
+# LLM model for text generation
+ollama pull llama3.2:3b
+
+# Embedding model for vector search
+ollama pull embeddinggemma:latest
+```
+
+**Step 2: Start Ollama Service**
+
+```bash
+# Start Ollama in a separate terminal
+ollama serve
+```
+
+>**Keep this terminal open** - Ollama needs to keep running.
+
+**Step 3: Start Llama Stack Server**
+
+From the **repository root directory**:
+
+```bash
+llama stack run run_llama_server.yaml
+```
+
+> **Keep this terminal open** - the server needs to keep running.
+> You should see output indicating the server started on `http://localhost:8321`.
+
+**Step 4: Install Agent Dependencies**
+
+Navigate to the RAG agent directory and install dependencies:
+
+```bash
+cd agents/community/langgraph_agentic_rag
 pip install -r requirements.txt
 ```
 
-### Using poetry
+**Step 5: Configure Environment Variables**
 
-```bash
-poetry install
-```
-
-## Configuration
-
-Create a `.env` file based on `.env.example`:
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Configure the following environment variables:
+Edit the `.env` file with your configuration:
 
 ```env
-# LLM Configuration
-BASE_URL=http://localhost:8001/v1
-MODEL_ID=gpt-4
-API_KEY=your-api-key-here
+# Llama Stack Server Configuration
+BASE_URL=http://localhost:8321
+MODEL_ID=ollama/llama3.2:3b
+API_KEY=not-needed
 
 # RAG Configuration
-VECTOR_STORE_PATH=./data/vector_store
-EMBEDDING_MODEL=text-embedding-3-small
+VECTOR_STORE_PATH=/absolute/path/to/milvus_data/milvus_lite.db
+EMBEDDING_MODEL=ollama/embeddinggemma:latest
+DOCS_TO_LOAD=./data/sample_knowledge.txt
 
 # Server Configuration
 PORT=8000
 ```
 
-### Environment Variables
+**Important**: Update `VECTOR_STORE_PATH` to an absolute path where you want the Milvus database stored.
 
-- `BASE_URL`: Base URL for the OpenAI-compatible API (e.g., `https://api.openai.com/v1`)
-- `MODEL_ID`: Model identifier (e.g., `gpt-4`, `gpt-3.5-turbo`)
-- `API_KEY`: API key for authentication (optional for local deployments)
-- `VECTOR_STORE_PATH`: Path to store/load the FAISS vector store (optional, creates sample data if not provided)
-- `EMBEDDING_MODEL`: Embedding model to use (default: `text-embedding-3-small`)
-- `PORT`: Port to run the FastAPI server on (default: `8000`)
+**Step 6: Load Documents into Vector Store**
 
-## Usage
-
-### Starting the Service
+Navigate to the data directory and run the document loader:
 
 ```bash
+cd data
+python load_documents.py
+```
+
+This will:
+- Read documents from `sample_knowledge.txt`
+- Split documents into chunks (512 characters with 128 overlap)
+- Generate embeddings using the `embeddinggemma` model
+- Store chunks in the Milvus Lite vector database
+
+**Step 7: Run the Interactive Chat**
+
+```bash
+cd ../examples
+python execute_ai_service_locally.py
+```
+
+You should see:
+```
+================================================================================
+LangGraph Agentic RAG - Interactive Chat
+================================================================================
+Model: ollama/llama3.2:3b
+Base URL: http://localhost:8321/v1
+...
+
+Choose a question or ask one of your own.
+ -->
+```
+
+**Step 8: Ask Questions!**
+
+Try asking questions about the loaded documents:
+```
+ --> What is LangChain?
+```
+
+📚 **For detailed troubleshooting and advanced configuration, see [QUICKSTART.md](./QUICKSTART.md)**
+
+## Dependencies
+
+This agent requires the following key dependencies (see `requirements.txt` for complete list):
+
+- `langchain-core`, `langchain-openai` - LangChain framework components
+- `langgraph`, `langgraph-prebuilt` - Graph-based agent orchestration
+- `llama-stack-client` - Llama Stack API client
+- `fastapi`, `uvicorn` - Web service framework
+- `pydantic`, `python-dotenv` - Configuration and data validation
+
+Dependencies are installed in **Step 4** of the Quick Start guide above.
+
+## Configuration Reference
+
+Configuration is handled through two files:
+
+### Llama Stack Server (`run_llama_server.yaml`)
+
+Located in the repository root, this configures:
+- Server port (8321)
+- Milvus Lite vector store path
+- Ollama integration URL
+- Registered models (LLM and embedding)
+
+### Application Environment (`.env`)
+
+Environment variables (configured in Step 5 of Quick Start):
+
+- `BASE_URL` - Llama Stack server URL (default: `http://localhost:8321`)
+- `MODEL_ID` - LLM model identifier (e.g., `ollama/llama3.2:3b`)
+- `API_KEY` - API authentication (use `not-needed` for local setup)
+- `VECTOR_STORE_PATH` - Absolute path to Milvus Lite database file
+- `EMBEDDING_MODEL` - Embedding model name (e.g., `ollama/embeddinggemma:latest`)
+- `DOCS_TO_LOAD` - Path to documents for vector store (e.g., `./data/sample_knowledge.txt`)
+- `PORT` - FastAPI server port (default: `8000`)
+
+## Running as a FastAPI Service
+
+To run the agent as a REST API service instead of interactive chat:
+
+```bash
+# From agents/community/langgraph_agentic_rag directory
 python main.py
 ```
 
@@ -157,38 +291,36 @@ curl -X POST http://localhost:8000/chat \
   -d '{"message": "What is RAG?"}'
 ```
 
-## Vector Store
+## Customizing Your Knowledge Base
 
-The agent uses FAISS for vector storage. If `VECTOR_STORE_PATH` is not provided or doesn't exist, the agent will create a sample vector store with documents about LangChain, LangGraph, RAG, and vector stores.
+### Using Your Own Documents
 
-### Creating a Custom Vector Store
+1. Create a text file with your content (e.g., `my_documents.txt`)
+2. Update `.env` to point to your file:
+   ```env
+   DOCS_TO_LOAD=./data/my_documents.txt
+   ```
+3. Re-run the document loader:
+   ```bash
+   cd data
+   python load_documents.py
+   ```
 
-You can create your own vector store by:
+### Adjusting Chunk Size
 
-1. Preparing your documents
-2. Using the LangChain FAISS integration to create embeddings
-3. Saving the vector store to `VECTOR_STORE_PATH`
-
-Example:
+Edit `load_documents.py` to customize chunking parameters:
 
 ```python
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
-
-# Create documents
-documents = [
-    Document(page_content="Your content here", metadata={"source": "doc1"}),
-    # Add more documents...
-]
-
-# Create embeddings and vector store
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-vectorstore = FAISS.from_documents(documents, embeddings)
-
-# Save for later use
-vectorstore.save_local("./data/vector_store")
+load_and_index_documents(
+    chunk_size=512,      # Size of text chunks (default: 512)
+    chunk_overlap=128,   # Overlap between chunks (default: 128)
+)
 ```
+
+**Recommended chunk sizes:**
+- Technical documentation: 512-1024 characters
+- Narrative text: 256-512 characters
+- Code snippets: 128-256 characters
 
 ## Development
 
@@ -215,14 +347,54 @@ langgraph-agentic-rag/
 pytest tests/
 ```
 
-## Differences from Base Agent
+## Troubleshooting
+
+### Connection Errors
+
+**Error**: `Connection refused to http://localhost:8321`
+
+**Solution**: Ensure the Llama Stack server is running:
+```bash
+llama stack run run_llama_server.yaml
+```
+
+### No Vector Store Found
+
+**Error**: `No vector store found. Please run load_documents.py first`
+
+**Solution**: Load documents into the vector store:
+```bash
+cd data
+python load_documents.py
+```
+
+### Empty or Irrelevant Responses
+
+**Possible causes:**
+1. **Chunk size too small** - Documents split into headers only
+   - Solution: Increase `chunk_size` to 512+ in `load_documents.py`
+2. **Documents not loaded** - Vector store is empty
+   - Solution: Re-run `python load_documents.py`
+3. **Wrong model** - Model not compatible
+   - Solution: Use `llama3.2:3b` or `llama3.1:8b`
+
+For more troubleshooting help, see [QUICKSTART.md](./QUICKSTART.md#troubleshooting).
+
+## Differences from Base Agents
 
 This RAG agent extends the base LangGraph agent with:
 
-1. **Retrieval Capability**: Automatic knowledge base search
+1. **Retrieval Capability**: Automatic knowledge base search via Llama Stack
 2. **Multi-step Workflow**: Agent → Retrieve → Generate pattern
-3. **Vector Store Integration**: FAISS-based document storage and retrieval
-4. **Context-aware Generation**: Answers based on retrieved documents
+3. **Vector Store Integration**: Milvus Lite-based document storage and retrieval
+4. **Context-aware Generation**: Answers based on retrieved documents with relevance checking
+5. **Llama Stack Integration**: Unified model serving and vector operations
+
+## Additional Resources
+
+- **[LangGraph Documentation](https://langchain-ai.github.io/langgraph/)** - LangGraph framework docs
+- **[Llama Stack Documentation](https://llama-stack.readthedocs.io/)** - Llama Stack API reference
+- **[Ollama Documentation](https://ollama.com/docs)** - Local model serving
 
 ## License
 

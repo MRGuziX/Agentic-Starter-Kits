@@ -86,7 +86,7 @@ if __name__ == "__main__":
     queries = [
         "What is LangGraph?",
         "Tell me about RAG and how it works",
-        "What is FAISS used for?",
+        "What is Milvus used for?",
     ]
 
     for query in queries:
