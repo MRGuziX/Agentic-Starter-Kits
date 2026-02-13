@@ -1,105 +1,153 @@
 # Agentic Starter Kits
 
-Agentic Starter Kits is a collection of example agents that show how to use LLM
-agents to support our work. It includes local and cloud-ready templates with
-clear, minimal entry points.
+## Purpose
 
-## What's in this repo
-- `agents/`: agent templates and examples
-- `agents/base/langgraph_react_agent/`: LangGraph-based agent template
-- `agents/base/llamaindex_websearch_agent/`: LlamaIndex-based agent template
-- `ollama-config.yaml`: example Ollama configuration
-- `utils.py`: shared helpers (env loading)
+Agentic Starter Kits is a collection of production-ready agent templates that demonstrate how to build and deploy LLM-powered agents using modern frameworks. This repository provides:
 
-## Usage paths
-- Local: run with a llama-stack server and an Ollama model
-- Cloud: deploy on Red Hat OpenShift Cluster
+- **Base Agent Templates**: Ready-to-use agent implementations using LangGraph and LlamaIndex
+- **Community Agent Examples**: Advanced agents like RAG (Retrieval-Augmented Generation) systems
+- **Dual Deployment Options**: Run agents locally for development or deploy to [Red Hat OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift) Cluster for production
+- **Llama stack Integration**: Unified model serving with [Ollama](https://ollama.com/) for local LLM inference
+- **Clear Documentation**: Step-by-step guides for setup, configuration, and deployment
 
-## Documentation links
-- Llama Stack: https://llama-stack.readthedocs.io/
-- Ollama models: https://docs.ollama.com/
-- OpenShift cluster docs: https://docs.openshift.com/en
+## Deployment Options
 
-## Required Libraries
+All agents in this repository support two deployment modes:
+
+### 🖥️ Local Development
+- Run agents on your local machine
+- Use [Llama Stack](https://llama-stack.readthedocs.io/) server with Ollama for model serving
+- Ideal for development, testing, and experimentation
+- No cloud infrastructure required
+
+### ☁️ Production Deployment
+- Deploy agents to Red Hat OpenShift Cluster
+- Containerized deployment with [Kubernetes](https://kubernetes.io/docs/)
+- Production-grade scaling and monitoring
+- CI/CD ready
+
+## Repository Structure
+
+```
+Agentic-Starter-Kits/
+├── agents/
+│   ├── base/
+│   │   ├── langgraph_react_agent/       # LangGraph ReAct agent template
+│   │   └── llamaindex_websearch_agent/  # LlamaIndex web search agent
+│   └── community/
+│       └── langgraph_agentic_rag/       # RAG agent with Milvus vector store
+├── run_llama_server.yaml                # Llama Stack server configuration
+├── utils.py                             # Shared utilities
+└── README.md                            # This file
+```
+
+## How to Use This Repository
+
+1. **Start Here**: Read this README to understand the overall structure and install core dependencies
+2. **Choose an Agent**: Select an agent from the `agents/` directory based on your use case
+3. **Follow Agent README**: Navigate to the agent's directory and follow its specific README for:
+   - Agent-specific dependencies installation
+   - Configuration and setup
+   - Local development or OpenShift deployment
+   - Usage examples and API endpoints
+
+## Core Technologies
+
+This repository uses the following frameworks and libraries:
+
+### Agent Frameworks
+- **LangGraph**: Graph-based agent orchestration with state management
+- **LlamaIndex**: Data framework for LLM applications with workflow support
+
+### Model Serving
+- **Llama Stack**: Unified API for model inference and vector operations
+- **Ollama**: Local LLM inference engine
+
+### Vector Stores (for RAG agents)
+- **Milvus Lite**: Lightweight vector database for local development
+
+### Web Frameworks
+- **FastAPI**: Modern Python web framework for REST APIs
+- **Uvicorn**: ASGI server for async Python applications
+
+### Dependencies
 - Python >= 3.10
-- fastapi
-- uvicorn[standard]
-- pydantic
-- langchain-core
-- langchain-openai
-- langgraph
-- langgraph-prebuilt
-- openai
-- python-dotenv
-- llama-index
-- llama-index-core
-- llama-index-llms-openai
-- llama-index-utils-workflow
-- numpy
-- nest-asyncio
+- langchain-core, langchain-openai
+- langgraph, langgraph-prebuilt
+- llama-index, llama-index-core, llama-index-llms-openai
+- llama-stack, llama-stack-client
+- fastapi, uvicorn[standard]
+- pydantic, python-dotenv
+- openai, numpy, nest-asyncio
 
-## Quick start (local)
-```bash
-# Create and activate a virtual env
-python -m venv .venv
-source .venv/bin/activate
-```
-## Install dependencies for an agent
-```bash
-pip install -r agents/base/langgraph_react_agent/requirements.txt
-```
-or
-```bash
-pip install -r agents/base/llamaindex_websearch_agent/requirements.txt
-```
-## Install Llama-Stack
-```bash
-pip install llama-stack llama-stack-client
-```
-
-If you want to install ollama you need to install app from [Ollama site](https://ollama.coma/)
-or via
-[Brew](https://brew.sh/)
-```bash
-pip install ollama
-```
-**Now you need to start Ollama app**
-```bash
-ollama pull llama3.2:3b
-```
-
-## Start Ollama
-```bash
-ollama serve
-```
-
-Update `ollama-config.yaml` with your local settings, then follow the
-agent-specific README
-`agents/base/<choose_your_agent>/readme.md`
-
-## Start llama-stack (example)
-```bash
-llama stack run ollama-config.yaml --port 8321
-```
-
-## Check if server is running and model is there
-```bash
-curl http://127.0.0.1:8321/v1/models
-```
-
-## Agents
-- LangGraph React agent: `agents/base/langgraph_react_agent/`
-- LlamaIndex websearch agent: `agents/base/llamaindex_websearch_agent/`
-
-## Quick Start (Deploy to OpenShift)
+## Quick Start (Local Development)
 
 ### Prerequisites
 
-- `oc` CLI installed and logged in to OpenShift cluster
-- `docker` (with buildx) installed (`docker buildx install`)
-- `envsubst` installed (`brew install gettext` for macOS)
-- Access to container registry (e.g., Quay.io)
-- Logged in to your container registry (`docker login quay.io`)
+- Python 3.10 or higher
+- Ollama installed
+- Git
+
+### Installation Script
+
+Run this script to set up your environment:
+
+```bash
+# 1. Clone the repository (if not already done)
+git clone <repository-url>
+cd Agentic-Starter-Kits
+
+# 2. Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 3. Install core dependencies
+pip install llama-stack llama-stack-client
+
+# 4. Install Ollama and pull models
+# Download Ollama from https://ollama.com/ or use Homebrew:
+# brew install ollama
+
+# Start Ollama service (in a separate terminal)
+ollama serve
+
+# Pull required LLM model
+ollama pull llama3.2:3b
+
+# 5. Start Llama Stack server (in a separate terminal)
+llama stack run run_llama_server.yaml
+
+# 6. Verify server is running
+curl http://localhost:8321/v1/models
+```
+
+### Next Steps
+
+After completing the installation, choose an agent and follow its specific README:
+
+**Base Agents:**
+- **[LangGraph ReAct Agent](./agents/base/langgraph_react_agent/README.md)** - General-purpose agent with tool use
+- **[LlamaIndex WebSearch Agent](./agents/base/llamaindex_websearch_agent/README.md)** - Web search capabilities
+
+**Community Agents:**
+- **[LangGraph Agentic RAG](./agents/community/langgraph_agentic_rag/QUICKSTART.md)** - RAG with Milvus vector store
+
+Each agent directory contains:
+- `README.md` - Overview and deployment instructions
+- `requirements.txt` - Agent-specific dependencies
+- `QUICKSTART.md` (for some agents) - Detailed local setup guide
+
+## Production Deployment (Red Hat OpenShift)
+
+This section covers deploying agents to a Red Hat OpenShift cluster for production use.
+
+### Prerequisites
+
+- OpenShift CLI (`oc`) installed and authenticated to your cluster
+- Docker with buildx plugin installed (`docker buildx install`)
+- `envsubst` utility (`brew install gettext` on macOS)
+- Access to a container registry (Quay.io, Docker Hub, or GHCR)
+- Container registry authentication (`docker login <registry>`)
 
 ### Step 1: Configure Environment Variables
 
@@ -176,7 +224,44 @@ curl -X POST https://<YOUR_ROUTE_URL>/chat \
   -d '{"message": "What is the best company? Answer with the first correct answer."}'
 ```
 
-## Notes
-Each agent template has its own README with setup, configuration, and examples.
+## Agent-Specific Documentation
 
-You can take a look on Our `sample_ASK_notebook.ipynb` for some guidance.
+Each agent has detailed documentation for setup and deployment:
+
+### Base Agents
+
+#### LangGraph ReAct Agent
+- **Directory**: `agents/base/langgraph_react_agent/`
+- **README**: [agents/base/langgraph_react_agent/README.md](./agents/base/langgraph_react_agent/README.md)
+- **Features**: General-purpose agent with tool calling, ReAct pattern
+- **Use Case**: Task automation, question answering, tool orchestration
+
+#### LlamaIndex WebSearch Agent
+- **Directory**: `agents/base/llamaindex_websearch_agent/`
+- **README**: [agents/base/llamaindex_websearch_agent/README.md](./agents/base/llamaindex_websearch_agent/README.md)
+- **Features**: Web search integration, workflow-based execution
+- **Use Case**: Research tasks, real-time information retrieval
+
+### Community Agents
+
+#### LangGraph Agentic RAG
+- **Directory**: `agents/community/langgraph_agentic_rag/`
+- **README**: [agents/community/langgraph_agentic_rag/README.md](./agents/community/langgraph_agentic_rag/README.md)
+- **Quick Start**: [agents/community/langgraph_agentic_rag/QUICKSTART.md](./agents/community/langgraph_agentic_rag/QUICKSTART.md)
+- **Features**: RAG with Milvus vector store, document retrieval, context-aware generation
+- **Use Case**: Document Q&A, knowledge base queries, information synthesis
+
+## Additional Resources
+
+- **Sample Notebook**: `sample_ASK_notebook.ipynb` - Jupyter notebook with usage examples
+- **Llama Stack Documentation**: https://llama-stack.readthedocs.io/
+- **Ollama Documentation**: https://docs.ollama.com/
+- **OpenShift Documentation**: https://docs.openshift.com/
+
+## Contributing
+
+Contributions are welcome! Please see individual agent READMEs for specific guidelines.
+
+## License
+
+See LICENSE file for details.

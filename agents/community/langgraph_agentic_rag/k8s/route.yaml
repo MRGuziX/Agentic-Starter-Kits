@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: langgraph_agentic_rag
+  labels:
+    app: langgraph_agentic_rag
+spec:
+  to:
+    kind: Service
+    name: langgraph_agentic_rag
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
