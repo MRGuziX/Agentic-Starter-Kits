@@ -135,7 +135,6 @@ After completing the installation, choose an agent and follow its specific READM
 Each agent directory contains:
 - `README.md` - Overview and deployment instructions
 - `requirements.txt` - Agent-specific dependencies
-- `QUICKSTART.md` (for some agents) - Detailed local setup guide
 
 ## Production Deployment (Red Hat OpenShift)
 
