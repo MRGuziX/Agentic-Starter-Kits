@@ -5,19 +5,18 @@ This script reads text files from the data directory, splits them into chunks,
 creates embeddings, and stores them in a Milvus Lite vector database.
 """
 
-import os
 import uuid
 
 from langchain_community.document_loaders import TextLoader
-from llama_stack_client import LlamaStackClient
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from llama_stack_client import LlamaStackClient
+
 from utils import get_env_var
 
 
 def load_and_index_documents(
         docs_to_load: str = None,
-        vector_store_path: str = None,
         embedding_model: str = None,
         base_url: str = None,
         api_key: str = None,
@@ -29,7 +28,6 @@ def load_and_index_documents(
 
     Args:
         docs_to_load: Directory containing text files to load
-        vector_store_path: Path where Milvus data will be stored
         embedding_model: Name of the embedding model
         base_url: Base URL for embeddings API
         api_key: API key for embeddings
@@ -47,9 +45,6 @@ def load_and_index_documents(
 
     if not docs_to_load:
         docs_to_load = get_env_var("DOCS_TO_LOAD")
-
-    if not vector_store_path:
-        vector_store_path = get_env_var("VECTOR_STORE_PATH")
 
     client = LlamaStackClient(
         base_url=base_url,

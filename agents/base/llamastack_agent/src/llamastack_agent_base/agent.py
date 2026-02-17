@@ -15,8 +15,8 @@ from typing import Any, Callable, Dict, List, Optional
 from dotenv import load_dotenv
 from llama_stack_client import LlamaStackClient
 
-from llamastack_agent_base.utils import get_env_var
-from llamastack_agent_base.tools import search_price, search_reviews
+from utils import get_env_var
+from .tools import search_price, search_reviews
 
 
 def get_agent_closure(

@@ -168,8 +168,6 @@ Try asking questions about the loaded documents:
  --> What is LangChain?
 ```
 
-📚 **For detailed troubleshooting and advanced configuration, see [QUICKSTART.md](./QUICKSTART.md)**
-
 ## Dependencies
 
 This agent requires the following key dependencies (see `requirements.txt` for complete list):
