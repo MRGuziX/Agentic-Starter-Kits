@@ -1,4 +1,91 @@
-## Deployment on RedHat OpenShift Cluster
+
+# Use Agent Locally
+
+### Installation Script
+Run this script to set up stuff:
+
+```bash
+git clone <repository-url>
+cd Agentic-Starter-Kits
+```
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+If you want to install ollama you need to install app from [Ollama site](https://ollama.com/) or via [Brew](https://formulae.brew.sh/formula/ollama#default)
+
+```bash
+#brew install ollama
+# or
+#curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Install Llama Stack**:
+
+```bash
+pip install llama-stack llama-stack-client
+```
+
+### Setup Instructions
+
+**Step 1: Pull Required Models**
+
+```bash
+ollama pull llama3.2:3b
+```
+
+**Step 2: Start Ollama Service**
+
+```bash
+ollama serve
+```
+
+>**Keep this terminal open** - Ollama needs to keep running.
+
+**Step 3: Start Llama Stack Server**
+
+From the **repository root directory**:
+
+```bash
+llama stack run run_llama_server.yaml
+```
+
+> **Keep this terminal open** - the server needs to keep running.
+> You should see output indicating the server started on `http://localhost:8321`.
+
+**Step 4: Install Agent Dependencies**
+
+Navigate to the RAG agent directory and install dependencies:
+
+```bash
+cd agents/community/langgraph_agentic_rag
+pip install -r requirements.txt
+```
+
+**Step 5: Configure Environment Variables**
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file with your configuration:
+
+```env
+# Llama Stack Server Configuration
+BASE_URL=http://localhost:8321
+MODEL_ID=ollama/llama3.2:3b
+API_KEY=not-needed
+```
+**Step 6: Run the Interactive Chat**
+
+```bash
+cd ../examples
+python execute_ai_service_locally.py
+```
+
+# Deployment on RedHat OpenShift Cluster
 
 ### Step 1: Initialize the Agent
 Navigate to the agent directory:
