@@ -80,27 +80,7 @@ This repository uses the following frameworks and libraries:
 - pydantic, python-dotenv
 - openai, numpy, nest-asyncio
 
-## Quick Start (Local Development)
 
-### Prerequisites
-
-- Python 3.10 or higher
-- Ollama installed
-- Git
-
-### Installation Script
-
-Run this script to set up your environment:
-
-```bash
-# 1. Clone the repository (if not already done)
-git clone <repository-url>
-cd Agentic-Starter-Kits
-```
-```bash
-# 2. Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 ### Next Steps
 

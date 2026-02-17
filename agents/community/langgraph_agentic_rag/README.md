@@ -32,24 +32,25 @@ START → Agent → [Decision] → Retrieve → Generate → END
                    END (if no retrieval needed)
 ```
 
-## Quick Start
+## Quick Start (Local Development)
 
-### Prerequisites
-
-- Python 3.10 or higher
-- Ollama installed and running
-- Llama Stack CLI installed
-
-### Installation
-
-**Install Ollama** (if not already installed):
+### Installation Script
+Run this script to set up stuff:
 
 ```bash
-# macOS/Linux
-#visit ollama website
+git clone <repository-url>
+cd Agentic-Starter-Kits
+```
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+If you want to install ollama you need to install app from [Ollama site](https://ollama.com/) or via [Brew](https://formulae.brew.sh/formula/ollama#default)
 
-# Or via Homebrew on macOS
-brew install ollama
+```bash
+#brew install ollama
+# or
+#curl -fsSL https://ollama.com/install.sh | sh
 ```
 
 **Install Llama Stack**:
@@ -63,17 +64,13 @@ pip install llama-stack llama-stack-client
 **Step 1: Pull Required Models**
 
 ```bash
-# LLM model for text generation
 ollama pull llama3.2:3b
-
-# Embedding model for vector search
 ollama pull embeddinggemma:latest
 ```
 
 **Step 2: Start Ollama Service**
 
 ```bash
-# Start Ollama in a separate terminal
 ollama serve
 ```
 
@@ -204,79 +201,6 @@ Environment variables (configured in Step 5 of Quick Start):
 - `DOCS_TO_LOAD` - Path to documents for vector store (e.g., `./data/sample_knowledge.txt`)
 - `PORT` - FastAPI server port (default: `8000`)
 
-## Running as a FastAPI Service
-
-To run the agent as a REST API service instead of interactive chat:
-
-```bash
-# From agents/community/langgraph_agentic_rag directory
-python main.py
-```
-
-The service will start on `http://localhost:8000` (or the port specified in `PORT` env var).
-
-### API Endpoints
-
-#### POST /chat
-
-Send a chat message to the RAG agent.
-
-**Request:**
-```json
-{
-  "message": "What is LangGraph?"
-}
-```
-
-**Response:**
-```json
-{
-  "messages": [
-    {
-      "role": "user",
-      "content": "What is LangGraph?"
-    },
-    {
-      "role": "assistant",
-      "content": "",
-      "tool_calls": [
-        {
-          "id": "call_123",
-          "type": "function",
-          "function": {
-            "name": "retriever",
-            "arguments": "{\"query\":\"LangGraph\"}"
-          }
-        }
-      ]
-    },
-    {
-      "role": "tool",
-      "tool_call_id": "call_123",
-      "name": "retriever",
-      "content": "Document 1:\nLangGraph is a library for building stateful, multi-actor applications with LLMs..."
-    },
-    {
-      "role": "assistant",
-      "content": "LangGraph is a library for building stateful, multi-actor applications with LLMs. It extends LangChain with the ability to coordinate multiple chains across multiple steps..."
-    }
-  ],
-  "finish_reason": "stop"
-}
-```
-
-#### GET /health
-
-Check the health status of the service.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "agent_initialized": true
-}
-```
-
 ### Using with curl
 
 ```bash
@@ -309,10 +233,10 @@ curl -X POST http://localhost:8000/chat \
 Edit `load_documents.py` to customize chunking parameters:
 
 ```python
-load_and_index_documents(
-    chunk_size=512,      # Size of text chunks (default: 512)
-    chunk_overlap=128,   # Overlap between chunks (default: 128)
-)
+    load_and_index_documents(
+        chunk_size=512,      # Size of text chunks (default: 512)
+        chunk_overlap=128,   # Overlap between chunks (default: 128)
+    )
 ```
 
 **Recommended chunk sizes:**
@@ -358,13 +282,13 @@ llama stack run run_llama_server.yaml
 
 ### No Vector Store Found
 
-**Error**: `No vector store found. Please run load_documents.py first`
-
 **Solution**: Load documents into the vector store:
 ```bash
 cd data
 python load_documents.py
 ```
+There is probability that locally creadted vector store can be broken somehow. Then you need to delete insides of the `milvus_data` folder.
+After that run `load_documents.py` again, and it will populate that folder.
 
 ### Empty or Irrelevant Responses
 
@@ -376,7 +300,6 @@ python load_documents.py
 3. **Wrong model** - Model not compatible
    - Solution: Use `llama3.2:3b` or `llama3.1:8b`
 
-For more troubleshooting help, see [QUICKSTART.md](./QUICKSTART.md#troubleshooting).
 
 ## Differences from Base Agents
 
