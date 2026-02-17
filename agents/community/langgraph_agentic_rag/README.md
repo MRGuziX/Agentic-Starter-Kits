@@ -32,7 +32,8 @@ START → Agent → [Decision] → Retrieve → Generate → END
                    END (if no retrieval needed)
 ```
 
-## Quick Start (Local Development)
+# Use Agent Locally
+
 
 ### Installation Script
 Run this script to set up stuff:
@@ -244,29 +245,52 @@ Edit `load_documents.py` to customize chunking parameters:
 - Narrative text: 256-512 characters
 - Code snippets: 128-256 characters
 
-## Development
+# Deployment on RedHat OpenShift Cluster
 
-### Project Structure
-
-```
-langgraph-agentic-rag/
-├── main.py                          # FastAPI application
-├── src/
-│   └── langgraph_agentic_rag/
-│       ├── __init__.py
-│       ├── agent.py                 # RAG agent graph definition
-│       ├── tools.py                 # Retriever tool
-│       └── utils.py                 # Utility functions
-├── pyproject.toml                   # Poetry configuration
-├── requirements.txt                 # Pip requirements
-├── .env.example                     # Example environment variables
-└── README.md                        # This file
-```
-
-### Running Tests
+### Step 1: Initialize the Agent
+Navigate to the agent directory:
 
 ```bash
-pytest tests/
+cd agents/community/langgraph_agentic_rag
+```
+Make scripts executable (first time only)
+
+```bash
+chmod +x init.sh deploy.sh   
+./init.sh
+```
+
+This will:
+- Load and validate environment variables from `.env` file
+- Copy shared utilities (`utils.py`) to the agent source directory
+
+### Step 2: Build image and deploy Agent
+
+```bash
+./deploy.sh
+```
+
+This will:
+- Create Kubernetes secret for API key
+- Build and push the Docker image
+- Deploy the agent to OpenShift
+- Create Service and Route
+
+### Step 3: Test the Agent
+
+Get your route URL:
+
+```bash
+oc get route langgraph-agentic-rag -o jsonpath='{.spec.host}'
+```
+copy the response to curl beneath to `<YOUR_ROUTE_URL>`
+
+Send a test request:
+
+```bash
+curl -X POST https://<YOUR_ROUTE_URL>/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is LangChain?"}'
 ```
 
 ## Troubleshooting

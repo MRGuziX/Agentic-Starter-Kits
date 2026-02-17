@@ -32,8 +32,9 @@ Agents in this repository can support two deployment modes:
 Agentic-Starter-Kits/
 ├── agents/
 │   ├── base/
-│   │   ├── langgraph_react_agent/       # LangGraph ReAct agent template
+│   │   ├── langgraph_react_agent/       # LangGraph ReAct agent 
 │   │   └── llamaindex_websearch_agent/  # LlamaIndex web search agent
+│   │   └── llamastack_agent/            # Llamastack bare API 
 │   └── community/
 │       └── langgraph_agentic_rag/       # RAG agent with Milvus vector store
 ├── run_llama_server.yaml                # Llama Stack server configuration

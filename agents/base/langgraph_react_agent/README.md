@@ -1,5 +1,6 @@
+## Deployment on RedHat OpenShift Cluster
 
-### Step 2: Initialize the Agent
+### Step 1: Initialize the Agent
 Navigate to the agent directory:
 
 ```bash
@@ -16,7 +17,7 @@ This will:
 - Load and validate environment variables from `.env` file
 - Copy shared utilities (`utils.py`) to the agent source directory
 
-### Step 3: Build image and deploy Agent
+### Step 2: Build image and deploy Agent
 
 ```bash
 ./deploy.sh
@@ -28,7 +29,7 @@ This will:
 - Deploy the agent to OpenShift
 - Create Service and Route
 
-### Step 4: Test the Agent
+### Step 3: Test the Agent
 
 Get your route URL:
 
