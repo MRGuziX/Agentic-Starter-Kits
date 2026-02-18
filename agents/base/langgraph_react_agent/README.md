@@ -12,6 +12,7 @@ cd Agentic-Starter-Kits
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
+
 If you want to install ollama you need to install app from [Ollama site](https://ollama.com/) or via [Brew](https://formulae.brew.sh/formula/ollama#default)
 
 ```bash
@@ -83,6 +84,29 @@ API_KEY=not-needed
 ```bash
 cd ../examples
 python execute_ai_service_locally.py
+```
+
+**⚡ Or with [uv](https://docs.astral.sh/uv/)** (from repo root):
+
+1. Create venv and activate:
+```bash
+uv venv --python 3.12
+source .venv/bin/activate
+```
+
+2. Copy shared utils into the agent package:
+```bash
+cp utils.py agents/base/langgraph_react_agent/src/langgraph_react_agent_base/
+```
+
+3. Install agent (editable) and its requirements:
+```bash
+uv pip install -e agents/base/langgraph_react_agent/. -r agents/base/langgraph_react_agent/requirements.txt
+```
+
+4. Run the example:
+```bash
+uv run agents/base/langgraph_react_agent/examples/execute_ai_service_locally.py
 ```
 
 # Deployment on RedHat OpenShift Cluster

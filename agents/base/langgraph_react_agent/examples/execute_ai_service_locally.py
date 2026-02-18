@@ -1,6 +1,6 @@
 from _interactive_chat import InteractiveChat
-from agents.base.langgraph_react_agent.examples.ai_service import ai_stream_service
-from utils import get_env_var
+from ai_service import ai_stream_service
+from langgraph_react_agent_base.utils import get_env_var
 
 
 class SimpleContext:
@@ -23,15 +23,13 @@ base_url = get_env_var("BASE_URL")
 model_id = get_env_var("MODEL_ID")
 
 # Ensure base_url ends with /v1 if provided
-if base_url and not base_url.endswith('/v1'):
-    base_url = base_url.rstrip('/') + '/v1'
+if base_url and not base_url.endswith("/v1"):
+    base_url = base_url.rstrip("/") + "/v1"
 
 stream = True
 context = SimpleContext()
 ai_service_resp_func = ai_stream_service(
-    context=context,
-    base_url=base_url,
-    model_id=model_id
+    context=context, base_url=base_url, model_id=model_id
 )[stream]
 
 
