@@ -57,8 +57,6 @@ async def lifespan(app: FastAPI):
         model_id=model_id,
         base_url=base_url,
         api_key=api_key,
-        vector_store_path=vector_store_path,
-        embedding_model=embedding_model,
     )
 
     yield

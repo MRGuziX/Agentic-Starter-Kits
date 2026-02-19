@@ -27,6 +27,9 @@ def get_graph_closure(
 
     Returns:
         A function that creates a CompiledGraph agent accepting {"messages": [...]} and returns updated state.
+        :param api_key:
+        :param base_url:
+        :param model_id:
     """
 
     # Get environment variables if not provided
