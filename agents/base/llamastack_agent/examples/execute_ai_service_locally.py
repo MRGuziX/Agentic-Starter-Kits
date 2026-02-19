@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 
-from llamastack_agent_base.agent import get_agent_closure
-from llamastack_agent_base.utils import get_env_var
+from agents.base.llamastack_agent.src.llamastack_agent_base.agent import get_agent_closure
+from utils import get_env_var
 
 
 async def main():

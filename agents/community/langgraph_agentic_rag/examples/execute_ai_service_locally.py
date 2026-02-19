@@ -1,6 +1,6 @@
 from _interactive_chat import InteractiveChat
 from ai_service import ai_stream_service
-from langgraph_react_agent_base.utils import get_env_var
+from utils import get_env_var
 
 
 class SimpleContext:
@@ -19,17 +19,22 @@ class SimpleContext:
         return {}
 
 
+# Load configuration from environment
 base_url = get_env_var("BASE_URL")
 model_id = get_env_var("MODEL_ID")
+vector_store_path = get_env_var("VECTOR_STORE_PATH")
+embedding_model = get_env_var("EMBEDDING_MODEL")
 
 # Ensure base_url ends with /v1 if provided
-if base_url and not base_url.endswith("/v1"):
-    base_url = base_url.rstrip("/") + "/v1"
+if base_url and not base_url.endswith('/v1'):
+    base_url = base_url.rstrip('/') + '/v1'
 
 stream = True
 context = SimpleContext()
 ai_service_resp_func = ai_stream_service(
-    context=context, base_url=base_url, model_id=model_id
+    context=context,
+    base_url=base_url,
+    model_id=model_id,
 )[stream]
 
 
@@ -38,6 +43,15 @@ def ai_service_invoke(payload):
     context.request_payload_json = payload
     return ai_service_resp_func(context)
 
+
+print("\n" + "="*80)
+print("LangGraph Agentic RAG - Interactive Chat")
+print("="*80)
+print(f"Model: {model_id}")
+print(f"Base URL: {base_url}")
+print(f"Vector Store: {vector_store_path or 'Using sample data'}")
+print(f"Embedding Model: {embedding_model}")
+print("="*80 + "\n")
 
 chat = InteractiveChat(ai_service_invoke, stream=stream)
 chat.run()
