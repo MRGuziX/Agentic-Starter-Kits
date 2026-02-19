@@ -53,11 +53,11 @@ async def lifespan(app: FastAPI):
         base_url = base_url.rstrip("/") + "/v1"
 
     # Get graph closure and create agent graph
-    agent_graph = get_graph_closure(
+    graph_closure = get_graph_closure(
         model_id=model_id,
         base_url=base_url,
-        api_key=api_key,
     )
+    agent_graph = graph_closure()
 
     yield
 
