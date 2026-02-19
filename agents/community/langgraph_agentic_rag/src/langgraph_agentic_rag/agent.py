@@ -6,7 +6,7 @@ from langgraph.graph import END, StateGraph, START
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from .tools import retriever_tool
-from utils import get_env_var
+from langgraph_agentic_rag.utils import get_env_var
 from typing_extensions import TypedDict
 
 

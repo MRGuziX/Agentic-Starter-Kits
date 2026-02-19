@@ -1,6 +1,6 @@
 from _interactive_chat import InteractiveChat
 from ai_service import ai_stream_service
-from utils import get_env_var
+from langgraph_agentic_rag.utils import get_env_var
 
 
 class SimpleContext:

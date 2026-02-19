@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 from llama_stack_client import LlamaStackClient
 from pydantic import BaseModel, Field
 
-from utils import get_env_var
+from langgraph_agentic_rag.utils import get_env_var
 
 # Cache to avoid re-initializing on every tool call
 _client_cache = None

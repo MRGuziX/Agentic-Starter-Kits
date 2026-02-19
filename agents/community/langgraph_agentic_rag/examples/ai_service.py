@@ -1,6 +1,6 @@
 from typing import Generator
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, BaseMessage, ToolMessage
-from agents.community.langgraph_agentic_rag.src.langgraph_agentic_rag.agent import get_graph_closure
+from langgraph_agentic_rag.agent import get_graph_closure
 
 def ai_stream_service(
         context,
