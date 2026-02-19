@@ -6,8 +6,8 @@ from typing import Generator, AsyncGenerator
 import nest_asyncio
 from llama_index.core.base.llms.types import ChatMessage
 
-from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.agent import get_workflow_closure
-from agents.base.llamaindex_websearch_agent.src.llama_index_workflow_agent_base.workflow import (
+from llama_index_workflow_agent_base.agent import get_workflow_closure
+from llama_index_workflow_agent_base.workflow import (
     ToolCallEvent,
     StopEvent,
     InputEvent,

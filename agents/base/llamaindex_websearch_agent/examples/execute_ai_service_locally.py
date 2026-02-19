@@ -1,6 +1,6 @@
 from _interactive_chat import InteractiveChat
-from agents.base.llamaindex_websearch_agent.examples.ai_service import ai_stream_service
-from utils import get_env_var
+from ai_service import ai_stream_service
+from llama_index_workflow_agent_base.utils import get_env_var
 
 
 class SimpleContext:
