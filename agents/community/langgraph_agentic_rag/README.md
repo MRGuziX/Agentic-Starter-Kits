@@ -95,7 +95,31 @@ Navigate to the RAG agent directory and install dependencies:
 cd agents/community/langgraph_agentic_rag
 pip install -r requirements.txt
 ```
+---
 
+**⚡ Or with [uv](https://docs.astral.sh/uv/)** (from repo root):
+
+1. Create venv and activate:
+```bash
+uv venv --python 3.12
+source .venv/bin/activate
+```
+
+2. Copy shared utils into the agent package:
+```bash
+cp utils.py agents/community/langgraph_agentic_rag/src/langgraph_agentic_rag
+```
+
+3. Install agent (editable) and its requirements:
+```bash
+uv pip install -e agents/community/langgraph_agentic_rag/. -r agents/community/langgraph_agentic_rag/requirements.txt
+```
+
+4. Run the example:
+```bash
+uv run agents/community/langgraph_agentic_rag/examples/execute_ai_service_locally.py
+```
+---
 **Step 5: Configure Environment Variables**
 
 Copy the example environment file:
