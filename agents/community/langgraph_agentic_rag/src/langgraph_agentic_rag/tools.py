@@ -39,6 +39,7 @@ def get_retriever_components(
     # Initialize LlamaStack client
     client = LlamaStackClient(
         base_url=base_url,
+        api_key=get_env_var("API_KEY"),
     )
 
     # Get the vector store ID
