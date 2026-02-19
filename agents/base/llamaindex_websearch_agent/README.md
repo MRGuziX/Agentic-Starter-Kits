@@ -150,6 +150,30 @@ curl -X POST http://localhost:8000/chat \
 ```
 ---
 
+**⚡ Or with [uv](https://docs.astral.sh/uv/)** (from repo root):
+
+1. Create venv and activate:
+```bash
+uv venv --python 3.12
+source .venv/bin/activate
+```
+
+2. Copy shared utils into the agent package:
+```bash
+cp utils.py agents/base/llamaindex_websearch_agent/src/llama_index_workflow_agent_base
+```
+
+3. Install agent (editable) and its requirements:
+```bash
+uv pip install -e agents/base/llamaindex_websearch_agent/. -r agents/base/llamaindex_websearch_agent/requirements.txt
+```
+
+4. Run the example:
+```bash
+uv run agents/base/llamaindex_websearch_agent/examples/execute_ai_service_locally.py
+```
+
+
 # Deployment to Red Hat OpenShift
 w# Deployment on RedHat OpenShift Cluster
 
