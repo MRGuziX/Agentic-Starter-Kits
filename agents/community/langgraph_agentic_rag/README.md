@@ -288,6 +288,8 @@ This will:
 - Copy shared utilities (`utils.py`) to the agent source directory
 
 ### Step 2: Build image and deploy Agent
+Now you need to login to OC and Docker
+
 
 ```bash
 ./deploy.sh

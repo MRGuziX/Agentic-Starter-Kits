@@ -1,13 +1,13 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: langgraph_agentic_rag
+  name: langgraph-agentic-rag
   labels:
-    app: langgraph_agentic_rag
+    app: langgraph-agentic-rag
 spec:
   to:
     kind: Service
-    name: langgraph_agentic_rag
+    name: langgraph-agentic-rag
   port:
     targetPort: http
   tls:

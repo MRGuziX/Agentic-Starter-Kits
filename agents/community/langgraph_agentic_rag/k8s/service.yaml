@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: langgraph_agentic_rag
+  name: langgraph-agentic-rag
   labels:
-    app: langgraph_agentic_rag
+    app: langgraph-agentic-rag
 spec:
   type: ClusterIP
   ports:
@@ -12,4 +12,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: langgraph_agentic_rag
+    app: langgraph-agentic-rag
