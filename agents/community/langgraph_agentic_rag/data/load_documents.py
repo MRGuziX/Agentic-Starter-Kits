@@ -12,16 +12,16 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from llama_stack_client import LlamaStackClient
 
-from utils import get_env_var
+from langgraph_agentic_rag.utils import get_env_var
 
 
 def load_and_index_documents(
-        docs_to_load: str = None,
-        embedding_model: str = None,
-        base_url: str = None,
-        api_key: str = None,
-        chunk_size: int = 512,  # Increased from 64 to 512 for better context
-        chunk_overlap: int = 128,  # Increased from 32 to 128 for better overlap
+    docs_to_load: str = None,
+    embedding_model: str = None,
+    base_url: str = None,
+    api_key: str = None,
+    chunk_size: int = 512,  # Increased from 64 to 512 for better context
+    chunk_overlap: int = 128,  # Increased from 32 to 128 for better overlap
 ):
     """
     Load documents from directory and index them in Milvus Lite.
@@ -53,7 +53,9 @@ def load_and_index_documents(
     vector_store_list = client.vector_stores.list()
 
     if len(vector_store_list.data) == 1:
-        vector_store = client.vector_stores.retrieve(vector_store_id=vector_store_list.data[0].id)
+        vector_store = client.vector_stores.retrieve(
+            vector_store_id=vector_store_list.data[0].id
+        )
         print("There is only one vector store. Picked that.")
     else:
         provider_id = "milvus"
@@ -66,7 +68,7 @@ def load_and_index_documents(
                 # "provider_vector_store_id": collection_name,  # --> not working in >0.4.x
                 "embedding_model": embedding_model,
                 "embedding_dimension": embedding_dimension,
-            }
+            },
         )
         print("Vector store registered successfully.")
 
@@ -87,7 +89,7 @@ def load_and_index_documents(
     chunks = []
     for doc in all_chunks:
         content = doc.page_content.strip()
-        if content and not all(c in '=-_*#\n\r\t ' for c in content):
+        if content and not all(c in "=-_*#\n\r\t " for c in content):
             chunks.append(content)
     print(f"Created {len(chunks)} chunks (filtered out empty/separator chunks)")
 
@@ -96,7 +98,7 @@ def load_and_index_documents(
         model=embedding_model,
         api_key=api_key or "not-needed",
         base_url=base_url + "/v1",
-        check_embedding_ctx_length=False  # prevent fail if embedding model is not registered in OpenAI Registry
+        check_embedding_ctx_length=False,  # prevent fail if embedding model is not registered in OpenAI Registry
     )
 
     print("Creating embeddings...")
@@ -117,7 +119,7 @@ def load_and_index_documents(
             },
             "metadata": {
                 "chunk_index": i,
-            }
+            },
         }
         formatted_chunks.append(chunk)
 

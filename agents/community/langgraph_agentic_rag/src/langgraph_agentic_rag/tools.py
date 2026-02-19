@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 from llama_stack_client import LlamaStackClient
 from pydantic import BaseModel, Field
 
-from utils import get_env_var
+from langgraph_agentic_rag.utils import get_env_var
 
 # Cache to avoid re-initializing on every tool call
 _client_cache = None
@@ -39,6 +39,7 @@ def get_retriever_components(
     # Initialize LlamaStack client
     client = LlamaStackClient(
         base_url=base_url,
+        api_key=get_env_var("API_KEY"),
     )
 
     # Get the vector store ID

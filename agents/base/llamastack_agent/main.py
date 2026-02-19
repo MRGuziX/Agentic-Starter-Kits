@@ -2,8 +2,8 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from agents.base.llamastack_agent.src.llamastack_agent_base.agent import get_agent_closure
-from utils import get_env_var
+from llamastack_agent_base.agent import get_agent_closure
+from llamastack_agent_base.utils import get_env_var
 from pydantic import BaseModel
 
 
